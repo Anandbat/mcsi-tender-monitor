@@ -1434,12 +1434,10 @@ async function simulateSync() {
   }, 40);
 
   try {
-    if (API_ONLINE) {
-      await apiFetch("/sync", { method: "POST" });
-      // Poll until sync settles (~6s)
-      await new Promise(r => setTimeout(r, 6000));
-    }
-  } catch (e) { /* offline — just animate */ }
+    await apiFetch("/sync", { method: "POST" });
+    // Poll until sync settles (~6s)
+    await new Promise(r => setTimeout(r, 6000));
+  } catch (e) { /* ignore error */ }
 
   clearInterval(syncInterval);
   icon.style.transform = '';
