@@ -777,12 +777,9 @@ window.addEventListener('scroll', () => {
 // ══════════════════════════════════════════════
 
 // Auto-detect API base: GitHub Pages → Render backend, local → localhost
-const RENDER_URL = "RENDER_API_PLACEHOLDER"; // replaced by GitHub Actions
-const API_BASE = (RENDER_URL && RENDER_URL !== "RENDER_API_PLACEHOLDER")
-  ? RENDER_URL
-  : (location.hostname === "localhost" || location.protocol === "file:")
-    ? "http://localhost:8000/api"
-    : `${location.protocol}//${location.host}/api`;
+const API_BASE = (location.hostname === "localhost" || location.protocol === "file:")
+  ? "http://localhost:8000/api"
+  : "https://mcsi-tender-monitor.onrender.com/api";
 let TENDERS = [];   // populated from API
 let API_ONLINE = false;
 
