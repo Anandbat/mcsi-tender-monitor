@@ -1102,9 +1102,10 @@ function renderDailyChart() {
     const color = isToday ? '#C8FF00' : cnt > 0 ? '#0d9488' : '#e2e8f0';
     const labelColor = isToday ? '#0f172a' : cnt > 0 ? '#475569' : '#cbd5e1';
     return `
-      <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px;cursor:default;" title="${cnt} tenders on ${month+1}/${day}">
-        <div style="font-size:9px;font-weight:700;color:${cnt>0?'#475569':'transparent'};margin-bottom:3px;line-height:1;">${cnt||''}</div>
-        <div style="width:80%;min-width:8px;background:${color};border-radius:4px 4px 0 0;height:${h}px;transition:height 0.4s ease;opacity:${isFuture&&cnt===0?0.3:1};"></div>
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px;cursor:default;position:relative;" title="${cnt} tenders on ${month+1}/${day}">
+        <div style="width:80%;min-width:8px;background:${color};border-radius:4px 4px 0 0;height:${h}px;transition:height 0.4s ease;opacity:${isFuture&&cnt===0?0.3:1};position:relative;">
+          ${cnt>0?`<div style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:#475569;white-space:nowrap;">${cnt}</div>`:''}
+        </div>
         <div style="font-size:9px;color:${isToday?'#0f172a':'#94a3b8'};margin-top:5px;font-weight:${isToday?'800':'400'};background:${isToday?'#C8FF00':'transparent'};border-radius:3px;padding:0 2px;line-height:1.6;">${day}</div>
       </div>`;
   }).join('');
@@ -1148,6 +1149,7 @@ let activeTypeFilters = new Set(['all']); // multi-select type
 let searchQuery = '';
 let energyOnly = false;
 let showExpired = false;
+let _urgentOnly = false;
 
 // ── Energy keywords ──────────────────────────────────────────────
 const ENERGY_KEYWORDS = [
@@ -1315,7 +1317,8 @@ function renderTable() {
     const matchSource = activeFilters.has('all') ||
       [...activeFilters].some(f => t.source.toLowerCase().includes(f.toLowerCase()));
     const matchExpiry = showExpired || t.days >= 0;
-    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry;
+    const matchUrgent = !_urgentOnly || (t.days >= 0 && t.days <= 7);
+    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry && matchUrgent;
   });
   // Apply sort
   rows.sort((a, b) => {
@@ -1418,14 +1421,20 @@ function goToTenders(filter) {
   document.querySelectorAll('#page-tenders .filter-pill[data-group]').forEach(p => p.classList.remove('active'));
   document.querySelectorAll('#page-tenders .filter-pill[data-val="all"]').forEach(p => p.classList.add('active'));
   if (filter === 'urgent') {
-    TENDERS.sort((a,b) => a.days - b.days);
-  } else if (filter === 'new') {
+    showExpired = false;
+    // Activate "Show Expired" off, filter days 0-7 via renderTable override
+    _urgentOnly = true;
+  } else {
+    _urgentOnly = false;
+  }
+  if (filter === 'new') {
     TENDERS.sort((a,b) => b.id - a.id);
   }
   renderTable();
 }
 
 function setFilter(el, val) {
+  _urgentOnly = false;
   toggleMulti(activeFilters, val, el, '#page-tenders .filter-pill[data-group="source"]');
   renderTable();
 }
