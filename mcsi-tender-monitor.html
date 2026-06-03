@@ -619,12 +619,12 @@
       <div class="glass-card stagger-5" style="padding:24px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
-            <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#1e293b;">Энэ сарын зарлагдсан tender</div>
-            <div style="font-size:12px;color:#64748b;margin-top:2px;">Өдөр тутамд нийтлэгдсэн тоо</div>
+            <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#1e293b;">Tenders Posted This Month</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">Daily count of new tenders</div>
           </div>
-          <div id="chart-total" style="font-size:12px;color:#64748b;"></div>
+          <div id="chart-total" style="font-size:12px;font-weight:600;color:#64748b;background:#f1f5f9;padding:4px 10px;border-radius:20px;"></div>
         </div>
-        <div id="daily-chart-main" style="display:flex;align-items:flex-end;gap:2px;height:100px;padding-bottom:20px;overflow-x:auto;">
+        <div id="daily-chart-main" style="display:flex;align-items:flex-end;gap:4px;height:120px;padding-bottom:22px;overflow-x:auto;">
         </div>
       </div>
 
@@ -1090,20 +1090,22 @@ function renderDailyChart() {
 
   const maxVal = Math.max(...Object.values(counts), 1);
   const total = Object.values(counts).reduce((a, b) => a + b, 0);
-  document.getElementById('chart-total').textContent = `Нийт ${total} tender`;
+  const totalEl = document.getElementById('chart-total');
+  if (totalEl) totalEl.textContent = `${total} total`;
 
   chart.innerHTML = Array.from({length: daysInMonth}, (_, i) => {
     const day = i + 1;
     const cnt = counts[day] || 0;
-    const h = Math.max(cnt / maxVal * 64, cnt > 0 ? 4 : 2);
+    const h = Math.max(cnt / maxVal * 88, cnt > 0 ? 6 : 0);
     const isToday = day === today;
-    const isPast = day < today;
-    const color = isToday ? '#C8FF00' : cnt > 0 ? '#14b8a6' : '#e2e8f0';
+    const isFuture = day > today;
+    const color = isToday ? '#C8FF00' : cnt > 0 ? '#0d9488' : '#e2e8f0';
+    const labelColor = isToday ? '#0f172a' : cnt > 0 ? '#475569' : '#cbd5e1';
     return `
-      <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:18px;cursor:default;" title="${month+1}/${day}: ${cnt} tender">
-        ${cnt > 0 ? `<div style="font-size:9px;color:#64748b;margin-bottom:2px;font-weight:600;">${cnt}</div>` : '<div style="font-size:9px;margin-bottom:2px;">&nbsp;</div>'}
-        <div style="width:100%;background:${color};border-radius:3px 3px 0 0;height:${h}px;transition:height 0.3s;"></div>
-        <div style="font-size:9px;color:${isToday ? '#C8FF00' : '#94a3b8'};margin-top:4px;font-weight:${isToday?'700':'400'}">${day}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:20px;cursor:default;" title="${cnt} tenders on ${month+1}/${day}">
+        <div style="font-size:9px;font-weight:700;color:${cnt>0?'#475569':'transparent'};margin-bottom:3px;line-height:1;">${cnt||''}</div>
+        <div style="width:80%;min-width:8px;background:${color};border-radius:4px 4px 0 0;height:${h}px;transition:height 0.4s ease;opacity:${isFuture&&cnt===0?0.3:1};"></div>
+        <div style="font-size:9px;color:${isToday?'#0f172a':'#94a3b8'};margin-top:5px;font-weight:${isToday?'800':'400'};background:${isToday?'#C8FF00':'transparent'};border-radius:3px;padding:0 2px;line-height:1.6;">${day}</div>
       </div>`;
   }).join('');
 }
