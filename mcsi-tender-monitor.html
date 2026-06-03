@@ -1210,7 +1210,7 @@ function renderDailyChart() {
         <div style="width:80%;min-width:8px;background:${color};border-radius:4px 4px 0 0;height:${h}px;transition:height 0.4s ease;opacity:${isFuture&&cnt===0?0.3:1};position:relative;">
           ${cnt>0?`<div style="position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:9px;font-weight:700;color:#475569;white-space:nowrap;">${cnt}</div>`:''}
         </div>
-        <div style="font-size:9px;color:${isToday?'#0f172a':'#94a3b8'};margin-top:5px;font-weight:${isToday?'800':'400'};background:${isToday?'#C8FF00':'transparent'};border-radius:3px;padding:0 2px;line-height:1.6;">${day}</div>
+        <div style="font-size:9px;color:${isToday?'#0f172a':'#94a3b8'};margin-top:5px;font-weight:${isToday?'800':'400'};background:${isToday?'#C8FF00':'transparent'};border-radius:3px;padding:0 2px;line-height:1.6;">${month+1}/${day}</div>
       </div>`;
   }).join('');
 }
