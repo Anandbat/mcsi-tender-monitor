@@ -1361,9 +1361,8 @@ function goToTenders(filter) {
   renderTable();
 }
 
-async function setFilter(el, val) {
+function setFilter(el, val) {
   toggleMulti(activeFilters, val, el, '#page-tenders .filter-pill[data-group="source"]');
-  await reloadByFilters();
   renderTable();
 }
 
