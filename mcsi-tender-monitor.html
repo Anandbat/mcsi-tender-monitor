@@ -616,7 +616,7 @@
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
 
       <!-- Chart -->
-      <div class="glass-card stagger-5" style="padding:24px;">
+      <div class="glass-card stagger-5" style="padding:24px;display:flex;flex-direction:column;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
             <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#111;">Tenders Posted This Month</div>
@@ -624,7 +624,7 @@
           </div>
           <div id="chart-total" style="font-size:12px;font-weight:600;color:#64748b;background:#f1f5f9;padding:4px 10px;border-radius:20px;"></div>
         </div>
-        <div id="daily-chart-main" style="display:flex;align-items:flex-end;gap:4px;height:100px;padding-top:20px;overflow-x:auto;overflow-y:visible;">
+        <div id="daily-chart-main" style="display:flex;align-items:flex-end;gap:4px;flex:1;padding-top:20px;overflow-x:auto;overflow-y:visible;min-height:80px;">
         </div>
       </div>
 
@@ -1093,11 +1093,12 @@ function renderDailyChart() {
   const totalEl = document.getElementById('chart-total');
   if (totalEl) totalEl.textContent = `${total} total`;
 
+  const chartH = Math.max(chart.clientHeight - 36, 60);
   // Only show days 1 to today
   chart.innerHTML = Array.from({length: today}, (_, i) => {
     const day = i + 1;
     const cnt = counts[day] || 0;
-    const h = Math.max(cnt / maxVal * 72, cnt > 0 ? 4 : 0);
+    const h = Math.max(cnt / maxVal * chartH, cnt > 0 ? 4 : 0);
     const isToday = day === today;
     const isFuture = day > today;
     const color = isToday ? '#C8FF00' : cnt > 0 ? '#0d9488' : '#e2e8f0';
