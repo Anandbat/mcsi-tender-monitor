@@ -68,8 +68,8 @@ async def scrape() -> list[dict]:
                 url_link = (
                     item.get("url") or
                     item.get("link") or
-                    (f"https://procurement.worldbank.org/en/opportunities/{notice_id}" if notice_id else "") or
-                    "https://procurement.worldbank.org/en/opportunities"
+                    (f"https://projects.worldbank.org/en/projects-operations/procurement/noticedetail?id={notice_id}" if notice_id else "") or
+                    "https://projects.worldbank.org/en/projects-operations/procurement-notices"
                 )
 
                 posted_raw = item.get("noticedate") or item.get("submission_date") or ""
