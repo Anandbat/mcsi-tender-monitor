@@ -15,6 +15,12 @@ BASE     = "https://user.tender.gov.mn"
 LIST_URL = f"{BASE}/kr/invitation"
 
 def load_cookie() -> str:
+    # 1. Environment variable (Render production)
+    import os
+    env_cookie = os.environ.get("TENDER_GOV_COOKIE", "")
+    if env_cookie:
+        return env_cookie
+    # 2. Local cookies.json file (development)
     try:
         data = json.loads(COOKIES_FILE.read_text(encoding="utf-8"))
         return data.get("tender.gov.mn", "")
