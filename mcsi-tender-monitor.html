@@ -1093,7 +1093,8 @@ function renderDailyChart() {
   const totalEl = document.getElementById('chart-total');
   if (totalEl) totalEl.textContent = `${total} total`;
 
-  chart.innerHTML = Array.from({length: daysInMonth}, (_, i) => {
+  // Only show days 1 to today
+  chart.innerHTML = Array.from({length: today}, (_, i) => {
     const day = i + 1;
     const cnt = counts[day] || 0;
     const h = Math.max(cnt / maxVal * 88, cnt > 0 ? 6 : 0);
