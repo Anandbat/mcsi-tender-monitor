@@ -1268,6 +1268,7 @@ function renderTable() {
     return sortDir === 'asc' ? cmp : -cmp;
   });
 
+  _filteredRows = rows;
   document.getElementById('row-count').textContent = rows.length;
   tbody.innerHTML = rows.map((t, i) => {
     const typeInfo = classifyType(t);
@@ -1275,8 +1276,8 @@ function renderTable() {
     const safeUrl = t.url ? t.url.replace(/'/g, "%27") : '';
     return `
     <tr class="tender-row" style="animation: pageIn 0.3s ${Math.min(i,20) * 0.02}s ease both;"
-        onclick="${safeUrl ? `window.open('${safeUrl}','_blank')` : ''}"
-        title="${safeUrl ? 'Click to open' : ''}">
+        onclick="openDetail(${i})"
+        title="Дэлгэрэнгүй харах">
       <td style="padding-left:20px;">
         <div style="font-size:13px;font-weight:500;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</div>
         <div style="font-size:11px;color:#aaa;margin-top:2px;">${t.cat}</div>
@@ -1554,6 +1555,67 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Auto-refresh stats every 2 minutes
   setInterval(loadAll, 120_000);
 });
+
+// ══════════════════════════════════════════════
+//  TENDER DETAIL MODAL
+// ══════════════════════════════════════════════
+let _filteredRows = [];
+
+function openDetail(idx) {
+  const t = _filteredRows[idx];
+  if (!t) return;
+  const typeInfo = classifyType(t);
+  document.getElementById('modal-title').textContent = t.name;
+  document.getElementById('modal-body').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Эх сурвалж</div>
+        <span class="${sourceBadgeClass(t.source)}">${t.source}</span>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Төрөл</div>
+        <span style="font-size:12px;font-weight:600;padding:2px 8px;border-radius:5px;${typeInfo.style}">${typeInfo.label}</span>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Нийтлэгдсэн огноо</div>
+        <div style="font-size:14px;font-weight:600;color:#1e293b;">${t.posted || '—'}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:10px;padding:12px;">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Дуусах огноо</div>
+        <div style="font-size:14px;font-weight:600;color:${daysColor(t.days)};">${t.deadline || '—'}</div>
+      </div>
+      ${t.value ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;grid-column:span 2;">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Төсөвт өртөг</div>
+        <div style="font-size:15px;font-weight:700;color:#059669;">${t.value}</div>
+      </div>` : ''}
+    </div>
+    <div style="background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:16px;">
+      <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Ангилал</div>
+      <div style="font-size:13px;color:#334155;">${t.cat || '—'}</div>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button onclick="document.getElementById('tender-modal').style.display='none'" style="padding:10px 20px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;cursor:pointer;">Хаах</button>
+      ${t.url ? `<a href="${t.url}" target="_blank" style="padding:10px 20px;border-radius:8px;background:#0f172a;color:#C8FF00;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;">
+        Эх сурвалж нээх ↗
+      </a>` : ''}
+    </div>
+  `;
+  document.getElementById('tender-modal').style.display = 'flex';
+}
 </script>
+
+<!-- TENDER DETAIL MODAL -->
+<div id="tender-modal" onclick="if(event.target===this)this.style.display='none'"
+  style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:1000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:16px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2);">
+    <div style="padding:20px 24px 16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:flex-start;gap:12px;">
+      <div id="modal-title" style="font-size:15px;font-weight:600;color:#0f172a;line-height:1.4;"></div>
+      <button onclick="document.getElementById('tender-modal').style.display='none'"
+        style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;font-size:16px;color:#64748b;display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+    <div id="modal-body" style="padding:20px 24px;"></div>
+  </div>
+</div>
+
 </body>
 </html>

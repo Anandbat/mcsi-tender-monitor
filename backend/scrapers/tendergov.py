@@ -39,11 +39,14 @@ def parse_cookies(cookie_str: str) -> dict:
 async def scrape() -> list[dict]:
     cookie_str = load_cookie()
     if not cookie_str:
-        print("[tender.gov.mn] No cookie in cookies.json")
+        print("[tender.gov.mn] No cookie — set TENDER_GOV_COOKIE env var")
         return []
-
-    # Run sync curl_cffi in thread pool
+    # Try httpx first (works if Cloudflare not blocking)
     loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, _scrape_httpx, cookie_str)
+    if result:
+        return result
+    # Fallback: curl_cffi with Chrome impersonation
     return await loop.run_in_executor(None, _scrape_sync, cookie_str)
 
 def _get_deadline(session, href: str, cookies: dict) -> str:
@@ -65,6 +68,75 @@ def _get_deadline(session, href: str, cookies: dict) -> str:
     except Exception:
         pass
     return ""
+
+
+def _scrape_httpx(cookie_str: str) -> list[dict]:
+    """Try scraping with plain httpx (no Cloudflare bypass)."""
+    import httpx
+    cookies = parse_cookies(cookie_str)
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+        "Referer": LIST_URL,
+        "Accept-Language": "mn-MN,mn;q=0.9,en;q=0.8",
+    }
+    results = []
+    try:
+        with httpx.Client(headers=headers, cookies=cookies, timeout=30, follow_redirects=True) as client:
+            for page in range(1, 6):
+                resp = client.get(LIST_URL, params={"year": "2026", "page": page, "perpage": 20, "get": 1})
+                print(f"[tender.gov.mn/httpx] page {page} → {resp.status_code}")
+                if resp.status_code in (403, 503):
+                    print("[tender.gov.mn/httpx] Cloudflare blocked — falling back to curl_cffi")
+                    return []
+                if resp.status_code != 200:
+                    break
+                soup = BeautifulSoup(resp.text, "html.parser")
+                rows = (
+                    soup.select("table tbody tr") or
+                    [r for r in soup.select("tr") if len(r.select("td")) >= 3]
+                )
+                if not rows:
+                    break
+                found = 0
+                for row in rows:
+                    cells = row.select("td")
+                    if len(cells) < 2:
+                        continue
+                    link = row.select_one("a")
+                    name = clean(link.get_text() if link else cells[0].get_text())
+                    if not name or len(name) < 5:
+                        continue
+                    href = ""
+                    if link:
+                        href = link.get("href", "")
+                        if href.startswith("/"):
+                            href = BASE + href
+                    posted_iso = ""
+                    for cell in cells:
+                        _, d_iso = parse_date_mn(cell.get_text(strip=True))
+                        if d_iso:
+                            posted_iso = d_iso
+                            break
+                    value = ""
+                    for cell in cells:
+                        if "₮" in cell.get_text():
+                            value = cell.get_text(strip=True)
+                            break
+                    uid = __import__('hashlib').md5((href or name).encode()).hexdigest()[:16]
+                    results.append({
+                        "external_id": uid, "name": name, "category": "Government",
+                        "value": value, "currency": "MNT", "deadline": posted_iso,
+                        "deadline_ts": posted_iso, "url": href or LIST_URL,
+                        "description": "", "status": "open", "posted_at": posted_iso,
+                    })
+                    found += 1
+                print(f"[tender.gov.mn/httpx] page {page}: {found} tenders")
+                if found == 0:
+                    break
+    except Exception as e:
+        print(f"[tender.gov.mn/httpx] error: {e}")
+        return []
+    return results
 
 
 def _scrape_sync(cookie_str: str) -> list[dict]:
