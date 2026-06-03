@@ -796,7 +796,7 @@ let TENDERS = [];   // populated from API
 let API_ONLINE = false;
 
 async function apiFetch(path, opts = {}) {
-  const res = await fetch(API_BASE + path, { ...opts, signal: AbortSignal.timeout(8000) });
+  const res = await fetch(API_BASE + path, { ...opts, signal: AbortSignal.timeout(60000) });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   return res.json();
 }
