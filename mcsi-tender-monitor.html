@@ -624,7 +624,7 @@
           </div>
           <div id="chart-total" style="font-size:12px;font-weight:600;color:#64748b;background:#f1f5f9;padding:4px 10px;border-radius:20px;"></div>
         </div>
-        <div id="daily-chart-main" style="display:flex;align-items:flex-end;gap:4px;height:140px;padding-top:20px;padding-bottom:22px;overflow-x:auto;overflow-y:visible;">
+        <div id="daily-chart-main" style="display:flex;align-items:flex-end;gap:4px;height:80px;padding-top:18px;padding-bottom:20px;overflow-x:auto;overflow-y:visible;">
         </div>
       </div>
 
@@ -1097,7 +1097,7 @@ function renderDailyChart() {
   chart.innerHTML = Array.from({length: today}, (_, i) => {
     const day = i + 1;
     const cnt = counts[day] || 0;
-    const h = Math.max(cnt / maxVal * 88, cnt > 0 ? 6 : 0);
+    const h = Math.max(cnt / maxVal * 44, cnt > 0 ? 4 : 0);
     const isToday = day === today;
     const isFuture = day > today;
     const color = isToday ? '#C8FF00' : cnt > 0 ? '#0d9488' : '#e2e8f0';
