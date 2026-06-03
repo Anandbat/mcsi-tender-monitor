@@ -2,7 +2,7 @@
 ADB — SearchStax API, Mongolia tenders with active closing dates only.
 Discovered from: https://www.adb.org/projects/tenders
 """
-import hashlib
+import hashlib, os
 from datetime import date
 from .base import make_client, parse_date_mn, clean
 
@@ -10,7 +10,7 @@ SOURCE = "ADB"
 BASE = "https://www.adb.org"
 
 SOLR_URL = "https://searchcloud-2-ap-southeast-1.searchstax.com/29847/tenders-11959/emselect"
-SEARCH_AUTH = "2a076eb3a48fd68fc78506c1a16a5d5000da76e4"
+SEARCH_AUTH = os.environ.get("ADB_SEARCH_TOKEN", "")
 
 async def scrape() -> list[dict]:
     today = date.today().isoformat()
