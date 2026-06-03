@@ -648,8 +648,8 @@
     <div class="glass-card" style="padding:24px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <div>
-          <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#f1f5f9;">Live Source Feed</div>
-          <div style="font-size:12px;color:var(--slate-500);margin-top:2px;">Latest tenders across all monitored sources</div>
+          <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#1e293b;">Live Source Feed</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">Latest tenders across all monitored sources</div>
         </div>
         <button class="btn-ghost" onclick="showPage('tenders', document.querySelector('.nav-item:nth-child(2)'))">
           View All
@@ -1066,14 +1066,14 @@ function renderFeed() {
         </svg>
       </div>
       <div style="flex:1;min-width:0;">
-        <div style="font-size:13px;font-weight:500;color:var(--slate-200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+        <div style="font-size:13px;font-weight:500;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
         <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
           <span class="${sourceBadgeClass(t.source)}">${t.source}</span>
           <span style="font-size:11px;color:var(--slate-500);">${t.cat}</span>
         </div>
       </div>
       <div style="text-align:right;flex-shrink:0;">
-        <div style="font-size:13px;font-weight:600;color:var(--slate-200);">${t.value}</div>
+        <div style="font-size:13px;font-weight:600;color:#1e293b;">${t.value}</div>
         <div style="font-size:11px;font-weight:600;color:${daysColor(t.days)};margin-top:2px;">${t.days === 1 ? '1 day left' : t.days + ' days left'}</div>
       </div>
     </div>
