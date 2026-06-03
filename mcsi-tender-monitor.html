@@ -1574,10 +1574,29 @@ document.addEventListener('DOMContentLoaded', async () => {
 // ══════════════════════════════════════════════
 let _filteredRows = [];
 
+function extractAmount(raw) {
+  if (!raw) return '';
+  const m = raw.match(/[\d,\.]+\s*[₮$€]/);
+  if (m) return m[0];
+  const m2 = raw.match(/[₮$€]\s*[\d,\.]+/);
+  if (m2) return m2[0];
+  return '';
+}
+
+function formatDetailText(raw) {
+  if (!raw) return '';
+  // Insert newlines before known Mongolian keywords
+  return raw
+    .replace(/(Захиалагчийн нэр|Харьцуулалтын арга|Урилгын дугаар|Зарласан огноо|журам)/g, '\n$1')
+    .split('\n').map(s => s.trim()).filter(Boolean).join('\n');
+}
+
 function openDetail(idx) {
   const t = _filteredRows[idx];
   if (!t) return;
   const typeInfo = classifyType(t);
+  const amount = extractAmount(t.value);
+  const rawText = formatDetailText(t.value);
   document.getElementById('modal-title').textContent = t.name;
   document.getElementById('modal-body').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
@@ -1595,22 +1614,27 @@ function openDetail(idx) {
       </div>
       <div style="background:#f8fafc;border-radius:10px;padding:12px;">
         <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Дуусах огноо</div>
-        <div style="font-size:14px;font-weight:600;color:${daysColor(t.days)};">${t.deadline || '—'}</div>
+        <div style="font-size:14px;font-weight:600;color:${daysColor(t.days)};">${t.deadline || '—'} <span style="font-size:11px;color:${daysColor(t.days)};">(${t.days >= 0 && t.days < 999 ? t.days+'d үлдсэн' : 'дууссан'})</span></div>
       </div>
-      ${t.value ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;grid-column:span 2;">
+      ${amount ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:12px;grid-column:span 2;">
         <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Төсөвт өртөг</div>
-        <div style="font-size:15px;font-weight:700;color:#059669;">${t.value}</div>
+        <div style="font-size:18px;font-weight:700;color:#059669;">${amount}</div>
+      </div>` : ''}
+      ${t.client ? `<div style="background:#f8fafc;border-radius:10px;padding:12px;grid-column:span 2;">
+        <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Захиалагч</div>
+        <div style="font-size:13px;font-weight:500;color:#1e293b;">${t.client}</div>
       </div>` : ''}
     </div>
-    <div style="background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:16px;">
+    ${rawText ? `<div style="background:#f8fafc;border-radius:10px;padding:14px;margin-bottom:16px;">
+      <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;">Дэлгэрэнгүй</div>
+      <div style="font-size:12px;color:#334155;line-height:1.7;white-space:pre-line;">${rawText}</div>
+    </div>` : `<div style="background:#f8fafc;border-radius:10px;padding:12px;margin-bottom:16px;">
       <div style="font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:4px;">Ангилал</div>
       <div style="font-size:13px;color:#334155;">${t.cat || '—'}</div>
-    </div>
+    </div>`}
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button onclick="document.getElementById('tender-modal').style.display='none'" style="padding:10px 20px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:13px;cursor:pointer;">Хаах</button>
-      ${t.url ? `<a href="${t.url}" target="_blank" style="padding:10px 20px;border-radius:8px;background:#0f172a;color:#C8FF00;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;">
-        Эх сурвалж нээх ↗
-      </a>` : ''}
+      ${t.url ? `<a href="${t.url}" target="_blank" style="padding:10px 20px;border-radius:8px;background:#0f172a;color:#C8FF00;font-size:13px;font-weight:600;text-decoration:none;display:flex;align-items:center;gap:6px;">Эх сурвалж нээх ↗</a>` : ''}
     </div>
   `;
   document.getElementById('tender-modal').style.display = 'flex';
