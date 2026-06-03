@@ -644,7 +644,21 @@
       </div>
     </div>
 
-    <!-- Row 3: Source Feed -->
+    <!-- Row 3: Daily Chart -->
+    <div class="glass-card" style="padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div>
+          <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#1e293b;">Энэ сарын зарлагдсан tender</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">Өдөр тутамд нийтлэгдсэн тоо</div>
+        </div>
+        <div id="chart-total" style="font-size:13px;color:#64748b;"></div>
+      </div>
+      <div id="daily-chart" style="display:flex;align-items:flex-end;gap:3px;height:80px;overflow-x:auto;padding-bottom:20px;position:relative;">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+    <!-- Row 4: Source Feed -->
     <div class="glass-card" style="padding:24px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <div>
@@ -1058,6 +1072,48 @@ function daysColor(d) {
   if (d <= 3) return 'var(--rose-400)';
   if (d <= 7) return 'var(--amber-400)';
   return 'var(--slate-300)';
+}
+
+function renderDailyChart() {
+  const chart = document.getElementById('daily-chart');
+  if (!chart) return;
+
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const today = now.getDate();
+
+  // Count tenders per day this month
+  const counts = {};
+  for (let d = 1; d <= daysInMonth; d++) counts[d] = 0;
+
+  TENDERS.forEach(t => {
+    if (!t.posted) return;
+    const d = new Date(t.posted);
+    if (d.getFullYear() === year && d.getMonth() === month) {
+      counts[d.getDate()] = (counts[d.getDate()] || 0) + 1;
+    }
+  });
+
+  const maxVal = Math.max(...Object.values(counts), 1);
+  const total = Object.values(counts).reduce((a, b) => a + b, 0);
+  document.getElementById('chart-total').textContent = `Нийт ${total} tender`;
+
+  chart.innerHTML = Array.from({length: daysInMonth}, (_, i) => {
+    const day = i + 1;
+    const cnt = counts[day] || 0;
+    const h = Math.max(cnt / maxVal * 64, cnt > 0 ? 4 : 2);
+    const isToday = day === today;
+    const isPast = day < today;
+    const color = isToday ? '#C8FF00' : cnt > 0 ? '#14b8a6' : '#e2e8f0';
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1;min-width:18px;cursor:default;" title="${month+1}/${day}: ${cnt} tender">
+        ${cnt > 0 ? `<div style="font-size:9px;color:#64748b;margin-bottom:2px;font-weight:600;">${cnt}</div>` : '<div style="font-size:9px;margin-bottom:2px;">&nbsp;</div>'}
+        <div style="width:100%;background:${color};border-radius:3px 3px 0 0;height:${h}px;transition:height 0.3s;"></div>
+        <div style="font-size:9px;color:${isToday ? '#C8FF00' : '#94a3b8'};margin-top:4px;font-weight:${isToday?'700':'400'}">${day}</div>
+      </div>`;
+  }).join('');
 }
 
 function renderFeed() {
@@ -1546,6 +1602,7 @@ async function loadAll() {
     loadTenders(null, searchQuery || null),
   ]);
   renderFeed();
+  renderDailyChart();
   renderTable();
   renderUrgentList();
   await loadSources();
