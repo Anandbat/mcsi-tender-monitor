@@ -705,24 +705,26 @@
       <div style="overflow-x:auto;">
         <table class="tender-table" style="table-layout:fixed;width:100%;">
           <colgroup>
-            <col style="width:32%">
-            <col style="width:12%">
+            <col style="width:24%">
+            <col style="width:18%">
             <col style="width:9%">
             <col style="width:10%">
-            <col style="width:10%">
-            <col style="width:7%">
-            <col style="width:6%">
+            <col style="width:9%">
+            <col style="width:9%">
+            <col style="width:8%">
+            <col style="width:8%">
             <col style="width:5%">
           </colgroup>
           <thead>
             <tr id="table-header-row">
               <th class="sortable-th" data-col="name" style="text-align:left;padding-left:20px;">Tender Name <span class="sort-icon">↕</span></th>
+              <th style="text-align:left;">Scope of Work</th>
               <th class="sortable-th" data-col="source" style="text-align:left;">Source <span class="sort-icon">↕</span></th>
-              <th style="text-align:left;">Type</th>
+              <th style="text-align:left;">Client</th>
               <th class="sortable-th" data-col="posted" style="text-align:center;">Posted <span class="sort-icon">↕</span></th>
               <th class="sortable-th" data-col="deadline_ts" style="text-align:center;">Deadline <span class="sort-icon">↕</span></th>
-              <th style="text-align:center;">Status</th>
               <th class="sortable-th" data-col="days" style="text-align:center;">Days <span class="sort-icon">↕</span></th>
+              <th style="text-align:left;">Type</th>
               <th style="text-align:center;">⚡</th>
             </tr>
           </thead>
@@ -917,11 +919,17 @@ function normalizeTender(t) {
   else if (days > 30) status = "new";
   // posted_at = actual source publication date; fallback to fetched_at
   const posted = (t.posted_at || t.fetched_at || "").slice(0, 10);
+  // Brief scope: first sentence of description, max 80 chars
+  const desc = (t.description || "").trim();
+  const firstSentence = desc.split(/[.!?]/)[0].trim();
+  const scope = firstSentence.length > 5 ? firstSentence.slice(0, 90) + (firstSentence.length > 90 ? "…" : "") : "";
   return {
     id: t.id,
     name: t.name || "(Untitled)",
     source: t.source,
     cat: t.category || "General",
+    client: t.client || "",
+    scope: scope,
     value: formatValue(t.value, t.currency),
     deadline: t.deadline || t.deadline_ts || "",
     deadline_ts: t.deadline_ts || "",
@@ -1282,15 +1290,20 @@ function renderTable() {
         <div style="font-size:13px;font-weight:500;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</div>
         <div style="font-size:11px;color:#aaa;margin-top:2px;">${t.cat}</div>
       </td>
+      <td>
+        <div style="font-size:11px;color:#475569;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.scope}">${t.scope || '—'}</div>
+      </td>
       <td><span class="${sourceBadgeClass(t.source)}" style="font-size:11px;">${t.source}</span></td>
       <td>
-        <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;${typeInfo.style}">${typeInfo.label}</span>
+        <div style="font-size:11px;color:#334155;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${t.client}">${t.client || '—'}</div>
       </td>
       <td style="text-align:center;font-size:12px;color:#888;">${t.posted || '—'}</td>
       <td style="text-align:center;font-size:12px;color:#555;font-weight:500;">${t.deadline || '—'}</td>
-      <td style="text-align:center;">${statusBadge(t.status, t.days)}</td>
       <td style="text-align:center;">
         <span style="font-size:12px;font-weight:700;color:${daysColor(t.days)};">${t.days >= 0 && t.days < 999 ? t.days+'d' : '—'}</span>
+      </td>
+      <td>
+        <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;${typeInfo.style}">${typeInfo.label}</span>
       </td>
       <td style="text-align:center;">${isEnergy ? '<span style="font-size:13px;">⚡</span>' : ''}</td>
     </tr>`;

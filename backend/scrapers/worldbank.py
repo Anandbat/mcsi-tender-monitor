@@ -83,6 +83,7 @@ async def scrape() -> list[dict]:
                     "deadline_ts": iso,
                     "url": url_link,
                     "description": clean(item.get("project_name") or ""),
+                    "client": clean(item.get("borrower_name") or item.get("org_name") or ""),
                     "status": "open",
                     "posted_at": posted_iso,
                 })

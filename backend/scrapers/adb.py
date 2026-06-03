@@ -88,6 +88,13 @@ async def scrape() -> list[dict]:
                 posted_raw = doc.get("ds_date_posted") or ""
                 _, posted_iso = parse_date_mn(str(posted_raw)[:10])
 
+                executing_agency = ""
+                raw_ea = doc.get("sm_fct_executing_agency") or doc.get("tm_X3b_en_executing_agency") or []
+                if isinstance(raw_ea, list) and raw_ea:
+                    executing_agency = raw_ea[0]
+                elif isinstance(raw_ea, str):
+                    executing_agency = raw_ea
+
                 uid = hashlib.md5((href or name).encode()).hexdigest()[:16]
                 results.append({
                     "external_id": uid,
@@ -99,6 +106,7 @@ async def scrape() -> list[dict]:
                     "deadline_ts": iso,
                     "url": href or f"{BASE}/projects/tenders",
                     "description": clean(tender_type),
+                    "client": clean(executing_agency),
                     "status": "open",
                     "posted_at": posted_iso,
                 })

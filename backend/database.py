@@ -27,6 +27,7 @@ CREATE TABLE IF NOT EXISTS tenders (
     deadline_ts TEXT DEFAULT '',
     url         TEXT DEFAULT '',
     description TEXT DEFAULT '',
+    client      TEXT DEFAULT '',
     status      TEXT DEFAULT 'open',
     posted_at   TEXT DEFAULT '',
     fetched_at  TIMESTAMPTZ DEFAULT NOW(),
@@ -50,6 +51,8 @@ async def init_db():
             s = stmt.strip()
             if s:
                 await conn.execute(s)
+        # Migration: add client column if missing
+        await conn.execute("ALTER TABLE tenders ADD COLUMN IF NOT EXISTS client TEXT DEFAULT ''");
 
 async def get_tenders(source: str = None, search: str = None, limit: int = 200) -> list[dict]:
     pool = await get_pool()
@@ -79,21 +82,21 @@ async def upsert_tender(source: str, external_id: str, data: dict) -> bool:
         async with pool.acquire() as conn:
             await conn.execute("""
                 INSERT INTO tenders (source, external_id, name, category, value, currency,
-                    deadline, deadline_ts, url, description, status, posted_at)
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12)
+                    deadline, deadline_ts, url, description, client, status, posted_at)
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13)
                 ON CONFLICT(source, external_id) DO UPDATE SET
                     name=EXCLUDED.name, category=EXCLUDED.category,
                     value=EXCLUDED.value, currency=EXCLUDED.currency,
                     deadline=EXCLUDED.deadline, deadline_ts=EXCLUDED.deadline_ts,
                     url=EXCLUDED.url, description=EXCLUDED.description,
-                    status=EXCLUDED.status, posted_at=EXCLUDED.posted_at,
-                    fetched_at=NOW()
+                    client=EXCLUDED.client, status=EXCLUDED.status,
+                    posted_at=EXCLUDED.posted_at, fetched_at=NOW()
             """,
             source, external_id,
             data.get("name",""), data.get("category",""), data.get("value",""),
             data.get("currency",""), data.get("deadline",""), data.get("deadline_ts",""),
-            data.get("url",""), data.get("description",""), data.get("status","open"),
-            posted_at)
+            data.get("url",""), data.get("description",""), data.get("client",""),
+            data.get("status","open"), posted_at)
         return True
     except Exception:
         return False
