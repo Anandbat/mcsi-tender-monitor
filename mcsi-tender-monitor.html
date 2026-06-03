@@ -617,15 +617,14 @@
 
       <!-- Urgent Deadlines — populated by JS -->
       <div class="glass-card stagger-5" style="padding:24px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
           <div>
-            <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#111;">Urgent Deadlines</div>
-            <div style="font-size:12px;color:#888;margin-top:2px;">Closing within 7 days</div>
+            <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#1e293b;">Энэ сарын зарлагдсан tender</div>
+            <div style="font-size:12px;color:#64748b;margin-top:2px;">Өдөр тутамд нийтлэгдсэн тоо</div>
           </div>
-          <span class="badge-rose" id="urgent-badge">—</span>
+          <div id="chart-total" style="font-size:12px;color:#64748b;"></div>
         </div>
-        <div id="urgent-list" style="display:flex;flex-direction:column;gap:14px;">
-          <div style="color:#aaa;font-size:13px;text-align:center;padding:20px 0;">Loading…</div>
+        <div id="daily-chart-main" style="display:flex;align-items:flex-end;gap:2px;height:100px;padding-bottom:20px;overflow-x:auto;">
         </div>
       </div>
 
@@ -644,21 +643,7 @@
       </div>
     </div>
 
-    <!-- Row 3: Daily Chart -->
-    <div class="glass-card" style="padding:24px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-        <div>
-          <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#1e293b;">Энэ сарын зарлагдсан tender</div>
-          <div style="font-size:12px;color:#64748b;margin-top:2px;">Өдөр тутамд нийтлэгдсэн тоо</div>
-        </div>
-        <div id="chart-total" style="font-size:13px;color:#64748b;"></div>
-      </div>
-      <div id="daily-chart" style="display:flex;align-items:flex-end;gap:3px;height:80px;overflow-x:auto;padding-bottom:20px;position:relative;">
-        <!-- Populated by JS -->
-      </div>
-    </div>
-
-    <!-- Row 4: Source Feed -->
+    <!-- Row 3: Source Feed -->
     <div class="glass-card" style="padding:24px;">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
         <div>
@@ -835,8 +820,8 @@ async function loadStats() {
     if (el1) el1.textContent = activeCount;
     if (el2) el2.textContent = liveCount;
 
-    // Source bar chart
-    renderSourceBars(data.sources || []);
+    // Source bar chart — use DB counts (by_source), not sync counts
+    renderSourceBars(data.by_source || {}, data.sources || []);
 
     updateBanner(true);
     return data;
@@ -882,25 +867,32 @@ function renderUrgentList() {
   }).join('');
 }
 
-function renderSourceBars(apiSources) {
+function renderSourceBars(bySource, apiSources) {
   const el = document.getElementById('source-bars');
   const badge = document.getElementById('activity-badge');
-  if (!el || !apiSources.length) return;
-  const total = apiSources.reduce((s,x) => s + (x.count||0), 0);
-  if (badge) badge.textContent = total + ' total';
-  const max = Math.max(...apiSources.map(s => s.count||0), 1);
+  if (!el) return;
   const colors = {
     'tender.gov.mn':'#2563EB','ADB':'#D97706','World Bank':'#059669',
     'EBRD':'#7C3AED','OT.mn / OASIS':'#D97706','Energy.gov.mn':'#EA580C'
   };
-  el.innerHTML = apiSources.map(s => {
-    const pct = Math.round(((s.count||0)/max)*100);
+  // Use DB counts from by_source; fall back to apiSources for source names
+  const sourceNames = Object.keys(bySource).length
+    ? Object.keys(bySource)
+    : (apiSources||[]).map(s => s.name);
+  const entries = sourceNames.map(name => ({
+    name, count: bySource[name] || 0
+  })).sort((a,b) => b.count - a.count);
+  const total = entries.reduce((s,x) => s + x.count, 0);
+  if (badge) badge.textContent = total + ' total';
+  const max = Math.max(...entries.map(s => s.count), 1);
+  el.innerHTML = entries.map(s => {
+    const pct = Math.round((s.count/max)*100);
     const col = colors[s.name] || '#0D9488';
     return `
     <div>
       <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
         <span style="font-size:12px;font-weight:500;color:#333;">${s.name}</span>
-        <span style="font-size:12px;font-weight:700;color:${col};">${s.count||0}</span>
+        <span style="font-size:12px;font-weight:700;color:${col};">${s.count}</span>
       </div>
       <div style="height:6px;background:#F0F2F5;border-radius:3px;overflow:hidden;">
         <div style="height:100%;width:${pct}%;background:${col};border-radius:3px;transition:width 0.8s;"></div>
@@ -1075,7 +1067,7 @@ function daysColor(d) {
 }
 
 function renderDailyChart() {
-  const chart = document.getElementById('daily-chart');
+  const chart = document.getElementById('daily-chart-main') || document.getElementById('daily-chart');
   if (!chart) return;
 
   const now = new Date();
