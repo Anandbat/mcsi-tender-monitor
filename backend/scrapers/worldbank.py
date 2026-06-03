@@ -64,10 +64,12 @@ async def scrape() -> list[dict]:
                 seen.add(notice_id)
 
                 uid = hashlib.md5(notice_id.encode() if notice_id else name.encode()).hexdigest()[:16]
+                # Try direct URL from API first, then known formats
                 url_link = (
-                    f"https://projects.worldbank.org/en/projects-operations/procurement/noticedetail/{notice_id}"
-                    if notice_id else
-                    "https://projects.worldbank.org/en/projects-operations/procurement-notices"
+                    item.get("url") or
+                    item.get("link") or
+                    (f"https://procurement.worldbank.org/en/opportunities/{notice_id}" if notice_id else "") or
+                    "https://procurement.worldbank.org/en/opportunities"
                 )
 
                 posted_raw = item.get("noticedate") or item.get("submission_date") or ""
