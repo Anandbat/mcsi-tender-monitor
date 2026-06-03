@@ -1,0 +1,9 @@
+fastapi
+uvicorn[standard]
+httpx
+beautifulsoup4
+asyncpg
+apscheduler
+python-dotenv
+pydantic
+curl_cffi

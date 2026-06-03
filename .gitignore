@@ -1,0 +1,11 @@
+.env
+tenders.db
+.claude/
+cookies.json
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+debug_*.py
+*.egg-info/

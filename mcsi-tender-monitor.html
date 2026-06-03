@@ -1,0 +1,1589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MCSI Tender Monitor</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* MCSI Brand */
+      --lime:      #C8FF00;
+      --lime-dim:  #A8D900;
+      --lime-glow: rgba(200,255,0,0.15);
+      --lime-soft: rgba(200,255,0,0.08);
+
+      /* Backgrounds — light charcoal, not pitch black */
+      --bg-main:   #F4F6F8;
+      --bg-card:   #FFFFFF;
+      --bg-sidebar:#111111;
+      --bg-hover:  #F0F2F5;
+
+      /* Text */
+      --text-900:  #0D0D0D;
+      --text-600:  #444444;
+      --text-400:  #888888;
+      --text-200:  #CCCCCC;
+
+      /* Borders */
+      --border:    rgba(0,0,0,0.08);
+      --border-s:  rgba(0,0,0,0.05);
+
+      /* Status colors */
+      --amber-400: #F59E0B;
+      --rose-400:  #F43F5E;
+      --emerald-400:#10B981;
+      --sky-400:   #0EA5E9;
+      --teal-400:  #0D9488;
+      --teal-500:  #0F766E;
+      --teal-600:  #115E59;
+      --slate-400: #94a3b8;
+      --slate-500: #64748b;
+      --slate-600: #475569;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-main);
+      color: var(--text-900);
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, .font-display { font-family: 'Sora', sans-serif; }
+
+    /* ── Scrollbar ── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #F0F0F0; }
+    ::-webkit-scrollbar-thumb { background: #CCCCCC; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--lime-dim); }
+
+    /* ── Sidebar — dark with MCSI lime ── */
+    .sidebar {
+      width: 260px;
+      min-height: 100vh;
+      background: var(--bg-sidebar);
+      border-right: none;
+      position: fixed;
+      left: 0; top: 0; bottom: 0;
+      display: flex;
+      flex-direction: column;
+      z-index: 50;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    .main-content {
+      margin-left: 260px;
+      min-height: 100vh;
+      background: var(--bg-main);
+    }
+
+    /* ── Logo Pulse ── */
+    @keyframes logoPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(200,255,0,0.4); }
+      50% { box-shadow: 0 0 0 8px rgba(200,255,0,0); }
+    }
+    .logo-mark {
+      animation: logoPulse 3s ease-in-out infinite;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+
+    /* ── Nav items ── */
+    .nav-item {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      color: #777777;
+      font-size: 14px;
+      font-weight: 500;
+      margin: 2px 0;
+      position: relative;
+      overflow: hidden;
+    }
+    .nav-item::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, rgba(200,255,0,0.06), transparent);
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .nav-item:hover { color: #FFFFFF; }
+    .nav-item:hover::before { opacity: 1; }
+    .nav-item.active {
+      color: var(--lime);
+      background: rgba(200,255,0,0.08);
+    }
+    .nav-item.active::before { opacity: 1; }
+    .nav-item.active::after {
+      content: '';
+      position: absolute; right: 0; top: 20%; bottom: 20%;
+      width: 3px;
+      background: var(--lime);
+      border-radius: 2px 0 0 2px;
+    }
+
+    /* ── Cards ── */
+    .glass-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      transition: border-color 0.3s, box-shadow 0.3s;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
+    }
+    .glass-card:hover {
+      border-color: rgba(200,255,0,0.4);
+      box-shadow: 0 4px 24px rgba(200,255,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .glass-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(200,255,0,0.6), transparent);
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .glass-card:hover::before { opacity: 1; }
+
+    /* ── Stat Cards ── */
+    @keyframes countUp {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .stat-value {
+      animation: countUp 0.6s ease forwards;
+    }
+
+    /* ── Glow Badge ── */
+    .badge-teal {
+      background: rgba(20,184,166,0.15);
+      color: var(--teal-400);
+      border: 1px solid rgba(20,184,166,0.25);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+    .badge-amber {
+      background: rgba(251,191,36,0.1);
+      color: var(--amber-400);
+      border: 1px solid rgba(251,191,36,0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-rose {
+      background: rgba(251,113,133,0.1);
+      color: var(--rose-400);
+      border: 1px solid rgba(251,113,133,0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-emerald {
+      background: rgba(52,211,153,0.1);
+      color: var(--emerald-400);
+      border: 1px solid rgba(52,211,153,0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .badge-sky {
+      background: rgba(56,189,248,0.1);
+      color: var(--sky-400);
+      border: 1px solid rgba(56,189,248,0.2);
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    /* ── Source status dot ── */
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+    .dot-live {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--emerald-400);
+      animation: blink 2s ease-in-out infinite;
+      flex-shrink: 0;
+    }
+    .dot-error {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--rose-400);
+      flex-shrink: 0;
+    }
+
+    /* ── Deadline bar ── */
+    .deadline-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: var(--slate-800);
+      overflow: hidden;
+    }
+    .deadline-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 1s cubic-bezier(0.4,0,0.2,1);
+    }
+
+    /* ── Table ── */
+    .tender-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .tender-table thead th {
+      padding: 12px 16px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #888888;
+      background: #F8F9FA;
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 10;
+    }
+    .tender-row {
+      border-bottom: 1px solid rgba(0,0,0,0.05);
+      transition: background 0.15s;
+      cursor: pointer;
+    }
+    .tender-row:hover { background: rgba(200,255,0,0.04); }
+    .tender-row td {
+      padding: 14px 16px;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+
+    /* ── Page reveal ── */
+    @keyframes pageIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .page { animation: pageIn 0.4s ease forwards; }
+    .page.hidden { display: none; }
+
+    /* ── Stagger ── */
+    .stagger-1 { animation-delay: 0.05s; opacity: 0; animation: pageIn 0.4s 0.05s ease forwards; }
+    .stagger-2 { animation-delay: 0.10s; opacity: 0; animation: pageIn 0.4s 0.10s ease forwards; }
+    .stagger-3 { animation-delay: 0.15s; opacity: 0; animation: pageIn 0.4s 0.15s ease forwards; }
+    .stagger-4 { animation-delay: 0.20s; opacity: 0; animation: pageIn 0.4s 0.20s ease forwards; }
+    .stagger-5 { animation-delay: 0.25s; opacity: 0; animation: pageIn 0.4s 0.25s ease forwards; }
+    .stagger-6 { animation-delay: 0.30s; opacity: 0; animation: pageIn 0.4s 0.30s ease forwards; }
+
+    /* ── Scan line effect on source cards ── */
+    @keyframes scan {
+      0% { top: -100%; }
+      100% { top: 100%; }
+    }
+    .source-card { position: relative; overflow: hidden; }
+    .source-card.live::after {
+      content: '';
+      position: absolute;
+      left: 0; right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(52,211,153,0.4), transparent);
+      animation: scan 3s linear infinite;
+    }
+
+    /* ── Search bar ── */
+    .search-input {
+      background: #FFFFFF;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      color: var(--text-900);
+      padding: 10px 16px 10px 40px;
+      font-size: 14px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .search-input:focus {
+      border-color: var(--lime-dim);
+      box-shadow: 0 0 0 3px rgba(200,255,0,0.12);
+    }
+    .search-input::placeholder { color: #AAAAAA; }
+
+    /* ── Filter pill ── */
+    .filter-pill {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid rgba(51,65,85,0.6);
+      background: transparent;
+      color: var(--slate-400);
+      transition: all 0.15s;
+      white-space: nowrap;
+    }
+    .filter-pill:hover { border-color: var(--teal-500); color: var(--teal-400); }
+    .filter-pill.active { background: rgba(20,184,166,0.15); border-color: var(--teal-500); color: var(--teal-400); }
+
+    /* ── Progress ring ── */
+    .ring-container { position: relative; display: inline-flex; }
+    .ring-container svg { transform: rotate(-90deg); }
+
+    /* ── Alert pulse ── */
+    @keyframes alertPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    .alert-urgent { animation: alertPulse 2s ease-in-out infinite; }
+
+    /* ── Gradient text ── */
+    .gradient-text {
+      background: linear-gradient(135deg, #A8D900, #C8FF00);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Notification dot ── */
+    .notif-dot {
+      width: 18px; height: 18px;
+      background: var(--rose-400);
+      border-radius: 50%;
+      font-size: 10px;
+      font-weight: 700;
+      color: white;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Skeleton loader ── */
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, var(--slate-800) 25%, rgba(51,65,85,0.5) 50%, var(--slate-800) 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+      border-radius: 6px;
+    }
+
+    /* ── Tooltip ── */
+    .has-tooltip { position: relative; }
+    .tooltip {
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--slate-800);
+      border: 1px solid rgba(51,65,85,0.8);
+      color: var(--slate-200);
+      font-size: 12px;
+      padding: 6px 10px;
+      border-radius: 8px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+      z-index: 100;
+    }
+    .has-tooltip:hover .tooltip { opacity: 1; }
+
+    /* ── Buttons ── */
+    .btn-primary {
+      background: var(--lime);
+      color: #0D0D0D;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .btn-primary:hover {
+      background: #D4FF1A;
+      box-shadow: 0 4px 20px rgba(200,255,0,0.4);
+      transform: translateY(-1px);
+    }
+    .btn-ghost {
+      background: #FFFFFF;
+      color: var(--text-600);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .btn-ghost:hover { border-color: var(--lime-dim); color: var(--text-900); }
+
+    /* ── Mini chart bars ── */
+    @keyframes barGrow {
+      from { transform: scaleY(0); }
+      to   { transform: scaleY(1); }
+    }
+    .chart-bar {
+      transform-origin: bottom;
+      animation: barGrow 0.6s cubic-bezier(0.4,0,0.2,1) forwards;
+      border-radius: 3px 3px 0 0;
+    }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(51,65,85,0.6), transparent);
+      margin: 0 16px;
+    }
+
+    /* ── Sortable column headers ── */
+    .sortable-th {
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+    .sortable-th:hover { color: #0D9488; }
+    .sortable-th.sort-asc .sort-icon::after  { content: ' ↑'; color: #0D9488; }
+    .sortable-th.sort-desc .sort-icon::after { content: ' ↓'; color: #0D9488; }
+    .sort-icon { font-size: 10px; color: #ccc; }
+    .sortable-th.sort-asc .sort-icon,
+    .sortable-th.sort-desc .sort-icon { color: #0D9488; }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ SIDEBAR ═══ -->
+<aside class="sidebar">
+  <!-- Logo -->
+  <div style="padding: 20px 20px 16px;">
+    <div style="display:flex; flex-direction:column; gap:6px;">
+      <img src="MCSI HR Товчилсон.png" alt="MCSI Logo" style="height:36px;width:auto;object-fit:contain;object-position:left;" />
+      <div style="font-size:9px; color:#C8FF00; letter-spacing:0.14em; font-weight:600; padding-left:2px;">TENDER MONITOR</div>
+    </div>
+  </div>
+
+  <div style="height:1px;background:rgba(255,255,255,0.08);margin:0 16px 12px;"></div>
+
+  <!-- Nav -->
+  <nav style="padding: 0 12px; flex:1;">
+    <div style="font-size:10px; color:#444; font-weight:600; letter-spacing:0.1em; padding:8px 16px 6px;">MAIN</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </div>
+    <div class="nav-item" onclick="showPage('tenders', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+      </svg>
+      Tender List
+      <span class="badge-teal" id="nav-tender-count" style="margin-left:auto;">—</span>
+    </div>
+    <div class="nav-item" onclick="showPage('sources', this)">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+      </svg>
+      Sources
+      <span class="notif-dot" id="nav-source-count" style="margin-left:auto;font-size:9px; width:16px;height:16px;">—</span>
+    </div>
+
+  </nav>
+
+  <!-- User -->
+  <div style="height:1px;background:rgba(255,255,255,0.08);margin:auto 16px 0;"></div>
+  <div style="padding:16px 20px; display:flex; align-items:center; gap:10px;">
+    <div style="width:34px;height:34px;border-radius:10px;background:var(--lime);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;color:#0D0D0D;flex-shrink:0;">A</div>
+    <div style="min-width:0;">
+      <div style="font-size:13px;font-weight:600;color:#FFFFFF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Anandbat G.</div>
+      <div style="font-size:11px;color:#555;">MCS International LLC</div>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════ MAIN ═══ -->
+<main class="main-content">
+
+  <!-- Top bar -->
+  <header style="position:sticky;top:0;z-index:40;background:rgba(244,246,248,0.92);backdrop-filter:blur(12px);border-bottom:1px solid rgba(0,0,0,0.07);padding:0 32px;">
+    <div style="height:64px;display:flex;align-items:center;gap:16px;">
+      <div style="flex:1;">
+        <div id="page-title" style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#0D0D0D;">Dashboard</div>
+        <div id="page-sub" style="font-size:12px;color:#888;margin-top:1px;">Monday, 2 June 2026 · Last synced <span style="color:var(--lime-dim);font-weight:600;">2 min ago</span></div>
+      </div>
+      <!-- Search -->
+      <div style="position:relative;width:260px;">
+        <svg style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--slate-500);" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+        </svg>
+        <input class="search-input" placeholder="Search tenders…" oninput="filterTenders(this.value)" />
+      </div>
+      <!-- Refresh btn -->
+      <button class="btn-primary" onclick="simulateSync()">
+        <svg id="sync-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        Sync Now
+      </button>
+    </div>
+  </header>
+
+  <!-- ══════ PAGE: DASHBOARD ══════ -->
+  <div id="page-dashboard" class="page" style="padding:32px;">
+
+    <!-- KPI Row -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:20px;margin-bottom:28px;">
+
+      <div class="glass-card stagger-1" onclick="goToTenders('all')" style="padding:24px;cursor:pointer;transition:transform 0.18s,box-shadow 0.18s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform='translateY(0)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:11px;color:#999;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px;">Active Tenders</div>
+            <div class="stat-value" style="font-family:'Sora',sans-serif;font-size:36px;font-weight:800;color:#0D0D0D;line-height:1;" id="counter-active">—</div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+              <span style="color:var(--emerald-400);font-size:12px;font-weight:600;">↑ Mongolia</span>
+            </div>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(200,255,0,0.1);display:flex;align-items:center;justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#A8D900" stroke-width="2">
+              <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#A8D900;font-weight:600;">View all →</div>
+      </div>
+
+      <div class="glass-card stagger-2" onclick="goToTenders('new')" style="padding:24px;cursor:pointer;transition:transform 0.18s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform='translateY(0)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:11px;color:#999;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px;">New This Week</div>
+            <div class="stat-value stat-new-week" style="font-family:'Sora',sans-serif;font-size:36px;font-weight:800;color:#0D0D0D;line-height:1;">—</div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+              <span style="color:var(--emerald-400);font-size:12px;font-weight:600;">Last 7 days</span>
+            </div>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(251,191,36,0.08);display:flex;align-items:center;justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--amber-400)" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/>
+            </svg>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#A8D900;font-weight:600;">View new →</div>
+      </div>
+
+      <div class="glass-card stagger-3" onclick="goToTenders('urgent')" style="padding:24px;cursor:pointer;transition:transform 0.18s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform='translateY(0)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:11px;color:#999;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px;">Closing Soon</div>
+            <div class="stat-value stat-closing" style="font-family:'Sora',sans-serif;font-size:36px;font-weight:800;color:var(--rose-400);line-height:1;">—</div>
+            <div style="margin-top:8px;">
+              <span class="badge-rose">≤ 7 days</span>
+            </div>
+          </div>
+          <div class="alert-urgent" style="width:44px;height:44px;border-radius:12px;background:rgba(244,63,94,0.08);display:flex;align-items:center;justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--rose-400)" stroke-width="2">
+              <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+            </svg>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#A8D900;font-weight:600;">View urgent →</div>
+      </div>
+
+      <div class="glass-card stagger-4" onclick="showPage('sources', document.querySelectorAll('.nav-item')[2])" style="padding:24px;cursor:pointer;transition:transform 0.18s;" onmouseenter="this.style.transform='translateY(-3px)'" onmouseleave="this.style.transform='translateY(0)'">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+          <div>
+            <div style="font-size:11px;color:#999;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;margin-bottom:10px;">Sources Live</div>
+            <div class="stat-value stat-sources" style="font-family:'Sora',sans-serif;font-size:36px;font-weight:800;color:#0D0D0D;line-height:1;">—</div>
+            <div style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+              <div class="dot-live" style="width:6px;height:6px;"></div>
+              <span style="font-size:12px;color:#888;">monitoring</span>
+            </div>
+          </div>
+          <div style="width:44px;height:44px;border-radius:12px;background:rgba(16,185,129,0.08);display:flex;align-items:center;justify-content:center;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--emerald-400)" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/>
+            </svg>
+          </div>
+        </div>
+        <div style="margin-top:12px;font-size:11px;color:#A8D900;font-weight:600;">View sources →</div>
+      </div>
+    </div>
+
+    <!-- Row 2: Urgent Deadlines + Activity Chart -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:28px;">
+
+      <!-- Urgent Deadlines — populated by JS -->
+      <div class="glass-card stagger-5" style="padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div>
+            <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#111;">Urgent Deadlines</div>
+            <div style="font-size:12px;color:#888;margin-top:2px;">Closing within 7 days</div>
+          </div>
+          <span class="badge-rose" id="urgent-badge">—</span>
+        </div>
+        <div id="urgent-list" style="display:flex;flex-direction:column;gap:14px;">
+          <div style="color:#aaa;font-size:13px;text-align:center;padding:20px 0;">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Tender Activity — by source -->
+      <div class="glass-card stagger-6" style="padding:24px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <div>
+            <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#111;">Tenders by Source</div>
+            <div style="font-size:12px;color:#888;margin-top:2px;">Active tenders per source</div>
+          </div>
+          <span class="badge-teal" id="activity-badge">—</span>
+        </div>
+        <div id="source-bars" style="display:flex;flex-direction:column;gap:10px;">
+          <div style="color:#aaa;font-size:13px;text-align:center;padding:20px 0;">Loading…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Row 3: Source Feed -->
+    <div class="glass-card" style="padding:24px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <div>
+          <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#f1f5f9;">Live Source Feed</div>
+          <div style="font-size:12px;color:var(--slate-500);margin-top:2px;">Latest tenders across all monitored sources</div>
+        </div>
+        <button class="btn-ghost" onclick="showPage('tenders', document.querySelector('.nav-item:nth-child(2)'))">
+          View All
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      </div>
+      <div id="feed-list">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ══════ PAGE: TENDERS ══════ -->
+  <div id="page-tenders" class="page hidden" style="padding:32px;">
+
+    <!-- Filters -->
+    <div class="glass-card" style="padding:20px;margin-bottom:16px;">
+      <!-- Row 1: Source filters -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+        <span style="font-size:10px;font-weight:700;color:#999;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">SOURCE</span>
+        <button class="filter-pill active" data-group="source" data-val="all" onclick="setFilter(this,'all')">All Sources</button>
+        <button class="filter-pill" data-group="source" data-val="tender.gov" onclick="setFilter(this,'tender.gov')">tender.gov.mn</button>
+        <button class="filter-pill" data-group="source" data-val="ADB" onclick="setFilter(this,'ADB')">ADB</button>
+        <button class="filter-pill" data-group="source" data-val="World Bank" onclick="setFilter(this,'World Bank')">World Bank</button>
+        <button class="filter-pill" data-group="source" data-val="EBRD" onclick="setFilter(this,'EBRD')">EBRD</button>
+        <!-- OT.mn removed — moved to SAP Ariba, no public data since Jun 2024 -->
+        <button class="filter-pill" data-group="source" data-val="Energy" onclick="setFilter(this,'Energy')">Energy.gov.mn</button>
+        <div style="margin-left:auto;display:flex;gap:8px;">
+          <button class="btn-ghost" style="font-size:12px;padding:8px 14px;" onclick="exportCSV()">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+            Export CSV
+          </button>
+        </div>
+      </div>
+      <!-- Row 2: Type + Energy filters -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);">
+        <span style="font-size:10px;font-weight:700;color:#999;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">TYPE</span>
+        <button class="filter-pill active" data-group="type" data-val="all" onclick="setTypeFilter(this,'all')">All Types</button>
+        <button class="filter-pill" data-group="type" data-val="eoi" onclick="setTypeFilter(this,'eoi')" style="color:#D97706;border-color:rgba(217,119,6,0.4);">EOI</button>
+        <button class="filter-pill" data-group="type" data-val="invitation" onclick="setTypeFilter(this,'invitation')" style="color:#2563EB;border-color:rgba(37,99,235,0.4);">Invitation / RFP</button>
+        <button class="filter-pill" data-group="type" data-val="award" onclick="setTypeFilter(this,'award')" style="color:#059669;border-color:rgba(5,150,105,0.4);">Award</button>
+        <button class="filter-pill" data-group="type" data-val="consulting" onclick="setTypeFilter(this,'consulting')" style="color:#7C3AED;border-color:rgba(124,58,237,0.4);">Consulting</button>
+        <button class="filter-pill" data-group="type" data-val="news" onclick="setTypeFilter(this,'news')" style="color:#64748b;border-color:rgba(100,116,139,0.4);">Notice / News</button>
+        <div style="width:1px;height:20px;background:rgba(0,0,0,0.1);margin:0 4px;"></div>
+        <button class="filter-pill" id="energy-only-btn" onclick="toggleEnergyOnly(this)" style="color:#EA580C;border-color:rgba(234,88,12,0.4);">⚡ Energy Only</button>
+        <button class="filter-pill" onclick="toggleExpired(this)" style="color:#94a3b8;border-color:rgba(148,163,184,0.4);opacity:0.6;">🕒 Show Expired</button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="glass-card" style="overflow:hidden;">
+      <div style="overflow-x:auto;">
+        <table class="tender-table" style="table-layout:fixed;width:100%;">
+          <colgroup>
+            <col style="width:32%">
+            <col style="width:12%">
+            <col style="width:9%">
+            <col style="width:10%">
+            <col style="width:10%">
+            <col style="width:7%">
+            <col style="width:6%">
+            <col style="width:5%">
+          </colgroup>
+          <thead>
+            <tr id="table-header-row">
+              <th class="sortable-th" data-col="name" style="text-align:left;padding-left:20px;">Tender Name <span class="sort-icon">↕</span></th>
+              <th class="sortable-th" data-col="source" style="text-align:left;">Source <span class="sort-icon">↕</span></th>
+              <th style="text-align:left;">Type</th>
+              <th class="sortable-th" data-col="posted" style="text-align:center;">Posted <span class="sort-icon">↕</span></th>
+              <th class="sortable-th" data-col="deadline_ts" style="text-align:center;">Deadline <span class="sort-icon">↕</span></th>
+              <th style="text-align:center;">Status</th>
+              <th class="sortable-th" data-col="days" style="text-align:center;">Days <span class="sort-icon">↕</span></th>
+              <th style="text-align:center;">⚡</th>
+            </tr>
+          </thead>
+          <tbody id="tender-tbody">
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+      <div style="padding:16px 20px;border-top:1px solid rgba(0,0,0,0.06);display:flex;justify-content:space-between;align-items:center;">
+        <div style="font-size:12px;color:#888;">Showing <strong style="color:#333;" id="row-count">—</strong> tenders</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════ PAGE: SOURCES ══════ -->
+  <div id="page-sources" class="page hidden" style="padding:32px;">
+    <div style="margin-bottom:24px;">
+      <div style="font-family:'Sora',sans-serif;font-size:20px;font-weight:700;color:#f1f5f9;margin-bottom:4px;">Monitoring Sources</div>
+      <div style="font-size:13px;color:var(--slate-500);">All platforms MCSI monitors for tender announcements</div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:20px;" id="sources-grid">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+</main>
+
+<!-- Scroll to top button — above API banner -->
+<button id="scroll-top-btn" onclick="window.scrollTo({top:0,behavior:'smooth'})"
+  style="display:none;position:fixed;bottom:72px;right:24px;z-index:1000;
+         width:40px;height:40px;border-radius:50%;border:none;cursor:pointer;
+         background:var(--lime);color:#0D0D0D;font-size:16px;font-weight:800;
+         box-shadow:0 4px 16px rgba(200,255,0,0.35);
+         align-items:center;justify-content:center;">
+  ↑
+</button>
+
+<script>
+// Scroll-to-top visibility
+window.addEventListener('scroll', () => {
+  const btn = document.getElementById('scroll-top-btn');
+  if (window.scrollY > 300) {
+    btn.style.display = 'flex';
+    btn.style.opacity = '1';
+  } else {
+    btn.style.display = 'none';
+  }
+});
+
+// ══════════════════════════════════════════════
+//  API CONFIG
+// ══════════════════════════════════════════════
+
+// Auto-detect API base: GitHub Pages → Render backend, local → localhost
+const RENDER_URL = "RENDER_API_PLACEHOLDER"; // replaced by GitHub Actions
+const API_BASE = (RENDER_URL && RENDER_URL !== "RENDER_API_PLACEHOLDER")
+  ? RENDER_URL
+  : (location.hostname === "localhost" || location.protocol === "file:")
+    ? "http://localhost:8000/api"
+    : `${location.protocol}//${location.host}/api`;
+let TENDERS = [];   // populated from API
+let API_ONLINE = false;
+
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(API_BASE + path, { ...opts, signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function loadStats() {
+  try {
+    const data = await apiFetch("/stats");
+    API_ONLINE = true;
+    // Update KPI counters
+    animateCount(document.getElementById("counter-active"), data.total || 0, 800);
+    // New this week
+    const newEl = document.querySelector(".stat-new-week");
+    if (newEl) animateCount(newEl, data.new_this_week || 0, 800);
+    // Closing soon
+    const closeEl = document.querySelector(".stat-closing");
+    if (closeEl) { closeEl.textContent = data.closing_soon || 0; closeEl.style.color = 'var(--rose-400)'; }
+    // Sources live
+    const srcEl = document.querySelector(".stat-sources");
+    const liveSrc = (data.sources || []).filter(s => s.live).length;
+    const totalSrc = (data.sources || []).length;
+    if (srcEl) srcEl.innerHTML = `${liveSrc}<span style="font-size:20px;color:var(--slate-500);">/${totalSrc}</span>`;
+    // Last sync time
+    if (data.last_sync) {
+      document.getElementById("page-sub").innerHTML =
+        `${new Date().toLocaleDateString("en-US",{weekday:"long",year:"numeric",month:"long",day:"numeric"})} · Last synced <span style="color:var(--teal-400);">${timeSince(data.last_sync)}</span>`;
+    }
+    // Sidebar live counts
+    const activeCount = data.total || 0;
+    const liveCount = (data.sources || []).filter(s => s.live).length;
+    const el1 = document.getElementById('nav-tender-count');
+    const el2 = document.getElementById('nav-source-count');
+    if (el1) el1.textContent = activeCount;
+    if (el2) el2.textContent = liveCount;
+
+    // Source bar chart
+    renderSourceBars(data.sources || []);
+
+    updateBanner(true);
+    return data;
+  } catch (e) {
+    updateBanner(false);
+    return null;
+  }
+}
+
+function renderUrgentList() {
+  const el = document.getElementById('urgent-list');
+  const badge = document.getElementById('urgent-badge');
+  if (!el) return;
+  const urgent = TENDERS
+    .filter(t => t.days >= 0 && t.days <= 7)
+    .sort((a,b) => a.days - b.days)
+    .slice(0,5);
+  if (badge) badge.textContent = urgent.length + ' open';
+  if (!urgent.length) {
+    el.innerHTML = '<div style="color:#aaa;font-size:13px;text-align:center;padding:20px 0;">No urgent deadlines</div>';
+    return;
+  }
+  el.innerHTML = urgent.map(t => {
+    const col = t.days <= 1 ? 'var(--rose-400)' : t.days <= 3 ? 'var(--amber-400)' : 'var(--teal-400)';
+    const barW = Math.max(5, Math.round((1 - t.days/8)*100));
+    return `
+    <div onclick="${t.url ? `window.open('${t.url.replace(/'/g,"%27")}','_blank')` : ''}" style="cursor:${t.url?'pointer':'default'}">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;align-items:center;">
+        <div style="min-width:0;flex:1;">
+          <div style="font-size:13px;font-weight:500;color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+          <div style="display:flex;gap:6px;margin-top:2px;">
+            <span class="${sourceBadgeClass(t.source)}" style="font-size:10px;">${t.source}</span>
+            ${t.value ? `<span style="font-size:11px;color:#888;">${t.value}</span>` : ''}
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;margin-left:12px;">
+          <div style="font-size:12px;font-weight:700;color:${col};">${t.days === 0 ? 'Today' : t.days + 'd'}</div>
+          <div style="font-size:10px;color:#888;">${t.deadline}</div>
+        </div>
+      </div>
+      <div class="deadline-bar"><div class="deadline-fill" style="width:${barW}%;background:${col};"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderSourceBars(apiSources) {
+  const el = document.getElementById('source-bars');
+  const badge = document.getElementById('activity-badge');
+  if (!el || !apiSources.length) return;
+  const total = apiSources.reduce((s,x) => s + (x.count||0), 0);
+  if (badge) badge.textContent = total + ' total';
+  const max = Math.max(...apiSources.map(s => s.count||0), 1);
+  const colors = {
+    'tender.gov.mn':'#2563EB','ADB':'#D97706','World Bank':'#059669',
+    'EBRD':'#7C3AED','OT.mn / OASIS':'#D97706','Energy.gov.mn':'#EA580C'
+  };
+  el.innerHTML = apiSources.map(s => {
+    const pct = Math.round(((s.count||0)/max)*100);
+    const col = colors[s.name] || '#0D9488';
+    return `
+    <div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
+        <span style="font-size:12px;font-weight:500;color:#333;">${s.name}</span>
+        <span style="font-size:12px;font-weight:700;color:${col};">${s.count||0}</span>
+      </div>
+      <div style="height:6px;background:#F0F2F5;border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${col};border-radius:3px;transition:width 0.8s;"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function loadTenders(source, search) {
+  try {
+    const params = new URLSearchParams({ limit: 200 });
+    if (source && source !== "all") params.set("source", source);
+    if (search) params.set("search", search);
+    const data = await apiFetch(`/tenders?${params}`);
+    TENDERS = (data.tenders || []).map(normalizeTender);
+    API_ONLINE = true;
+    return TENDERS;
+  } catch (e) {
+    // Keep existing TENDERS in place (may be empty on first load)
+    return TENDERS;
+  }
+}
+
+function normalizeTender(t) {
+  const days = daysLeftFromISO(t.deadline_ts);
+  let status = "open";
+  if (days >= 0 && days <= 7) status = "urgent";
+  else if (days < 0) status = "expired";
+  else if (days > 30) status = "new";
+  // posted_at = actual source publication date; fallback to fetched_at
+  const posted = (t.posted_at || t.fetched_at || "").slice(0, 10);
+  return {
+    id: t.id,
+    name: t.name || "(Untitled)",
+    source: t.source,
+    cat: t.category || "General",
+    value: formatValue(t.value, t.currency),
+    deadline: t.deadline || t.deadline_ts || "",
+    deadline_ts: t.deadline_ts || "",
+    posted: posted,
+    days: days,
+    status: status,
+    url: t.url || "",
+  };
+}
+
+function formatValue(val, currency) {
+  if (!val) return "";
+  const sym = { MNT: "₮", USD: "USD ", EUR: "EUR " }[currency] || "";
+  return sym + val;
+}
+
+function daysLeftFromISO(iso) {
+  if (!iso) return 999;
+  try {
+    const d = new Date(iso);
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    return Math.round((d - now) / 86400000);
+  } catch { return 999; }
+}
+
+function timeSince(isoStr) {
+  if (!isoStr) return "never";
+  try {
+    const diff = Math.floor((Date.now() - new Date(isoStr + "Z")) / 60000);
+    if (diff < 1) return "just now";
+    if (diff < 60) return `${diff} min ago`;
+    if (diff < 1440) return `${Math.floor(diff/60)} hr ago`;
+    return `${Math.floor(diff/1440)} days ago`;
+  } catch { return isoStr; }
+}
+
+function updateBanner(online) {
+  let banner = document.getElementById("api-banner");
+  if (!banner) {
+    banner = document.createElement("div");
+    banner.id = "api-banner";
+    banner.style.cssText = "position:fixed;bottom:20px;right:20px;z-index:999;padding:10px 16px;border-radius:10px;font-size:12px;font-weight:600;display:flex;align-items:center;gap:8px;transition:all 0.3s;";
+    document.body.appendChild(banner);
+  }
+  if (online) {
+    banner.style.background = "rgba(52,211,153,0.15)";
+    banner.style.border = "1px solid rgba(52,211,153,0.3)";
+    banner.style.color = "var(--emerald-400)";
+    banner.innerHTML = `<div style="width:6px;height:6px;border-radius:50%;background:var(--emerald-400);animation:blink 2s infinite;"></div> API Connected`;
+  } else {
+    banner.style.background = "rgba(251,113,133,0.1)";
+    banner.style.border = "1px solid rgba(251,113,133,0.2)";
+    banner.style.color = "var(--rose-400)";
+    banner.innerHTML = `<div style="width:6px;height:6px;border-radius:50%;background:var(--rose-400);"></div> API Offline — showing cached data`;
+  }
+}
+
+const SOURCES = [
+  { name:'e-tender.mn', desc:'Mongolia\'s official e-procurement portal', url:'https://www.e-tender.mn', live:true, count:21, last:'2 min ago', color:'var(--teal-400)' },
+  { name:'tender.gov.mn', desc:'Government public procurement platform', url:'https://www.tender.gov.mn', live:true, count:9, last:'5 min ago', color:'var(--sky-400)' },
+  { name:'tender.mn', desc:'Private tender aggregation platform', url:'https://www.tender.mn', live:true, count:4, last:'8 min ago', color:'var(--amber-400)' },
+  { name:'ADB', desc:'Asian Development Bank — Mongolia projects', url:'https://www.adb.org', live:true, count:3, last:'15 min ago', color:'var(--emerald-400)' },
+  { name:'World Bank', desc:'World Bank Group procurement notices', url:'https://projects.worldbank.org', live:true, count:2, last:'22 min ago', color:'var(--teal-300)' },
+  { name:'EBRD', desc:'European Bank for Reconstruction & Development', url:'https://www.ebrd.com', live:true, count:2, last:'31 min ago', color:'#a78bfa' },
+  { name:'OT.mn / OASIS', desc:'Oyu Tolgoi mining procurement portal', url:'https://ot.mn', live:true, count:3, last:'18 min ago', color:'var(--amber-400)' },
+  { name:'Energy.gov.mn', desc:'Ministry of Energy procurement notices', url:'https://energy.gov.mn', live:true, count:2, last:'45 min ago', color:'#f97316' },
+  { name:'Company Websites', desc:'MCS, APU, and other corporate portals', url:'#', live:false, count:1, last:'Manual', color:'var(--slate-400)' },
+];
+
+// ══════════════════════════════════════════════
+//  NAVIGATION
+// ══════════════════════════════════════════════
+
+function showPage(pageId, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.add('hidden'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const page = document.getElementById('page-' + pageId);
+  if (page) {
+    page.classList.remove('hidden');
+    page.style.animation = 'none';
+    page.offsetHeight;
+    page.style.animation = '';
+  }
+  // Find nav item by page name if not passed directly
+  if (!navEl) {
+    document.querySelectorAll('.nav-item').forEach(n => {
+      if (n.getAttribute('onclick') && n.getAttribute('onclick').includes(`'${pageId}'`)) navEl = n;
+    });
+  }
+  if (navEl) navEl.classList.add('active');
+  const titles = { dashboard:'Dashboard', tenders:'Tender List', sources:'Sources' };
+  const liveN = document.getElementById('nav-source-count')?.textContent || '—';
+  const totalN = document.getElementById('nav-tender-count')?.textContent || '—';
+  const subs = {
+    dashboard: new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'}),
+    tenders: `${totalN} active tenders across ${liveN} sources`,
+    sources: `${liveN} monitored platforms live`
+  };
+  document.getElementById('page-title').textContent = titles[pageId] || pageId;
+  document.getElementById('page-sub').innerHTML = subs[pageId] || '';
+}
+
+// ══════════════════════════════════════════════
+//  RENDER FEED
+// ══════════════════════════════════════════════
+
+function sourceBadgeClass(src) {
+  if (src.includes('e-tender')) return 'badge-teal';
+  if (src.includes('tender.gov')) return 'badge-sky';
+  if (src.includes('ADB')) return 'badge-amber';
+  if (src.includes('World Bank')) return 'badge-emerald';
+  if (src.includes('EBRD')) return 'badge-teal';
+  if (src.includes('OT') || src.includes('OASIS')) return 'badge-emerald';
+  if (src.includes('Energy')) return 'badge-amber';
+  return 'badge-teal';
+}
+
+function statusBadge(s, days) {
+  if (s === 'urgent') return `<span class="badge-rose">Urgent</span>`;
+  if (s === 'new') return `<span class="badge-teal">New</span>`;
+  return `<span class="badge-sky">Open</span>`;
+}
+
+function daysColor(d) {
+  if (d <= 3) return 'var(--rose-400)';
+  if (d <= 7) return 'var(--amber-400)';
+  return 'var(--slate-300)';
+}
+
+function renderFeed() {
+  const feed = document.getElementById('feed-list');
+  // Show most recently posted tenders, sorted by posted_at desc, skip no-name
+  const recent = [...TENDERS]
+    .filter(t => t.name && t.name !== '(Untitled)')
+    .sort((a,b) => (b.posted||'').localeCompare(a.posted||''))
+    .slice(0, 6);
+  feed.innerHTML = recent.map((t, i) => `
+    <div style="display:flex;align-items:center;gap:16px;padding:12px 0;${i < recent.length-1?'border-bottom:1px solid rgba(51,65,85,0.3);':''}cursor:pointer;transition:background 0.15s;border-radius:8px;" class="feed-row">
+      <div style="width:36px;height:36px;border-radius:10px;background:rgba(20,184,166,0.08);border:1px solid rgba(20,184,166,0.15);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--teal-400)" stroke-width="2">
+          <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:13px;font-weight:500;color:var(--slate-200);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${t.name}</div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+          <span class="${sourceBadgeClass(t.source)}">${t.source}</span>
+          <span style="font-size:11px;color:var(--slate-500);">${t.cat}</span>
+        </div>
+      </div>
+      <div style="text-align:right;flex-shrink:0;">
+        <div style="font-size:13px;font-weight:600;color:var(--slate-200);">${t.value}</div>
+        <div style="font-size:11px;font-weight:600;color:${daysColor(t.days)};margin-top:2px;">${t.days === 1 ? '1 day left' : t.days + ' days left'}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+//  RENDER TABLE
+// ══════════════════════════════════════════════
+
+let activeFilters = new Set(['all']);   // multi-select source
+let activeTypeFilters = new Set(['all']); // multi-select type
+let searchQuery = '';
+let energyOnly = false;
+let showExpired = false;
+
+// ── Energy keywords ──────────────────────────────────────────────
+const ENERGY_KEYWORDS = [
+  'energy','power','solar','wind','bess','substation','ohtl',
+  'transmission','grid','generation','plant','hydro','renewable','electricity',
+  'photovoltaic','battery','storage','transformer','switchgear','voltage',
+  'overhead line','cable','feeder','distribution','utility',
+  ' mw ',' kv ',' kwh',' mwh',
+  'эрчим','цахилгаан','нарны','салхи','дамжуулах','станц','шугам','тариф',
+  'дэд станц','хүч','сэргээгдэх','усан цахилгаан','генератор','дулаан','heating','heat',
+];
+
+// ── Tender type classification ────────────────────────────────────
+const TYPE_RULES = [
+  {
+    key: 'award',
+    label: 'Award',
+    style: 'background:rgba(5,150,105,0.1);color:#059669;border:1px solid rgba(5,150,105,0.25);',
+    kw: ['award','awarded','contract award','гэрээ байгуулах','гэрээ олгох'],
+  },
+  {
+    key: 'eoi',
+    label: 'EOI',
+    style: 'background:rgba(217,119,6,0.1);color:#D97706;border:1px solid rgba(217,119,6,0.25);',
+    kw: ['eoi','expression of interest','оролцох сонирхол','осих','оролцох','интерест','эои',
+         'request for eoi','rfei','notice of expression'],
+  },
+  {
+    key: 'invitation',
+    label: 'Invitation',
+    style: 'background:rgba(37,99,235,0.1);color:#2563EB;border:1px solid rgba(37,99,235,0.25);',
+    kw: ['invitation','itb','rfp','rfq','request for proposal','request for quotation',
+         'bid','bidding','тендерт урих','урилга','дуусгавар болгох','нийлүүлэх урилга',
+         'tender invitation','supply of','нийлүүлэх'],
+  },
+  {
+    key: 'consulting',
+    label: 'Consulting',
+    style: 'background:rgba(124,58,237,0.1);color:#7C3AED;border:1px solid rgba(124,58,237,0.25);',
+    kw: ['consulting','consultant','feasibility','study','assessment','design','epc','зөвлөх',
+         'судалгаа','зураг төсөл','боловсруулах','зургийн','барилга угсралт'],
+  },
+  {
+    key: 'news',
+    label: 'Notice',
+    style: 'background:rgba(100,116,139,0.1);color:#64748b;border:1px solid rgba(100,116,139,0.25);',
+    kw: ['notice','announcement','мэдэгдэл','мэдээ','зарлал','news','publication'],
+  },
+  {
+    key: 'procurement',
+    label: 'Procurement',
+    style: 'background:rgba(14,165,233,0.1);color:#0EA5E9;border:1px solid rgba(14,165,233,0.25);',
+    kw: ['procurement','purchase','закупка','худалдан авалт','нийтийн'],
+  },
+];
+
+function classifyType(t) {
+  const txt = (t.name + ' ' + t.cat).toLowerCase();
+  for (const rule of TYPE_RULES) {
+    if (rule.kw.some(k => txt.includes(k))) return rule;
+  }
+  return { key:'other', label:'General', style:'background:rgba(148,163,184,0.1);color:#94a3b8;border:1px solid rgba(148,163,184,0.2);' };
+}
+
+function isEnergyTender(t) {
+  const txt = (t.name + ' ' + t.cat + ' ' + t.source).toLowerCase();
+  return ENERGY_KEYWORDS.some(k => txt.includes(k));
+}
+
+function toggleEnergyOnly(btn) {
+  energyOnly = !energyOnly;
+  if (energyOnly) {
+    btn.style.background = 'rgba(234,88,12,0.12)';
+    btn.style.borderColor = 'rgba(234,88,12,0.5)';
+    btn.style.color = '#EA580C';
+    btn.classList.add('active');
+  } else {
+    btn.style.background = 'transparent';
+    btn.style.borderColor = 'rgba(234,88,12,0.4)';
+    btn.style.color = '#EA580C';
+    btn.classList.remove('active');
+  }
+  renderTable();
+}
+
+function toggleMulti(set, val, el, allSelector) {
+  if (val === 'all') {
+    set.clear(); set.add('all');
+    document.querySelectorAll(allSelector).forEach(p => p.classList.remove('active'));
+    el.classList.add('active');
+  } else {
+    set.delete('all');
+    document.querySelectorAll(allSelector + '[data-val="all"]').forEach(p => p.classList.remove('active'));
+    if (set.has(val)) {
+      set.delete(val);
+      el.classList.remove('active');
+      if (set.size === 0) { set.add('all'); document.querySelector(allSelector + '[data-val="all"]').classList.add('active'); }
+    } else {
+      set.add(val);
+      el.classList.add('active');
+    }
+  }
+}
+
+function setTypeFilter(el, val) {
+  toggleMulti(activeTypeFilters, val, el, '#page-tenders .filter-pill[data-group="type"]');
+  renderTable();
+}
+
+// ── Sort state ───────────────────────────────────────────────────
+let sortCol = 'days';
+let sortDir = 'asc';
+
+function sortTenders(col) {
+  if (sortCol === col) {
+    sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortCol = col;
+    sortDir = col === 'name' || col === 'source' ? 'asc' : 'asc';
+  }
+  // Update header icons
+  document.querySelectorAll('.sortable-th').forEach(th => {
+    th.classList.remove('sort-asc','sort-desc');
+    if (th.dataset.col === col) th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+  });
+  renderTable();
+}
+
+function getSortVal(t, col) {
+  if (col === 'name')   return (t.name || '').toLowerCase();
+  if (col === 'source') return (t.source || '').toLowerCase();
+  if (col === 'posted') return t.posted || '';
+  if (col === 'deadline_ts') return t.deadline_ts || '9999';
+  if (col === 'days')   return t.days;
+  return '';
+}
+
+// Wire up header clicks after DOM ready
+function initSortHeaders() {
+  document.querySelectorAll('.sortable-th').forEach(th => {
+    th.addEventListener('click', () => sortTenders(th.dataset.col));
+  });
+  // Default: sort by days asc
+  const daysTh = document.querySelector('.sortable-th[data-col="days"]');
+  if (daysTh) daysTh.classList.add('sort-asc');
+}
+
+function toggleExpired(btn) {
+  showExpired = !showExpired;
+  btn.textContent = showExpired ? '🕒 Hide Expired' : '🕒 Show Expired';
+  btn.style.opacity = showExpired ? '1' : '0.6';
+  renderTable();
+}
+
+function renderTable() {
+  const tbody = document.getElementById('tender-tbody');
+  let rows = TENDERS.filter(t => {
+    const matchSearch = !searchQuery ||
+      t.name.toLowerCase().includes(searchQuery) ||
+      t.source.toLowerCase().includes(searchQuery) ||
+      t.cat.toLowerCase().includes(searchQuery);
+    const matchEnergy = !energyOnly || isEnergyTender(t);
+    const typeKey = classifyType(t).key;
+    const matchType = activeTypeFilters.has('all') || activeTypeFilters.has(typeKey);
+    const matchSource = activeFilters.has('all') ||
+      [...activeFilters].some(f => t.source.toLowerCase().includes(f.toLowerCase()));
+    const matchExpiry = showExpired || t.days >= 0;
+    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry;
+  });
+  // Apply sort
+  rows.sort((a, b) => {
+    const av = getSortVal(a, sortCol), bv = getSortVal(b, sortCol);
+    const cmp = typeof av === 'number'
+      ? av - bv
+      : String(av).localeCompare(String(bv));
+    return sortDir === 'asc' ? cmp : -cmp;
+  });
+
+  document.getElementById('row-count').textContent = rows.length;
+  tbody.innerHTML = rows.map((t, i) => {
+    const typeInfo = classifyType(t);
+    const isEnergy = isEnergyTender(t);
+    const safeUrl = t.url ? t.url.replace(/'/g, "%27") : '';
+    return `
+    <tr class="tender-row" style="animation: pageIn 0.3s ${Math.min(i,20) * 0.02}s ease both;"
+        onclick="${safeUrl ? `window.open('${safeUrl}','_blank')` : ''}"
+        title="${safeUrl ? 'Click to open' : ''}">
+      <td style="padding-left:20px;">
+        <div style="font-size:13px;font-weight:500;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${t.name}</div>
+        <div style="font-size:11px;color:#aaa;margin-top:2px;">${t.cat}</div>
+      </td>
+      <td><span class="${sourceBadgeClass(t.source)}" style="font-size:11px;">${t.source}</span></td>
+      <td>
+        <span style="font-size:11px;font-weight:600;padding:2px 7px;border-radius:5px;${typeInfo.style}">${typeInfo.label}</span>
+      </td>
+      <td style="text-align:center;font-size:12px;color:#888;">${t.posted || '—'}</td>
+      <td style="text-align:center;font-size:12px;color:#555;font-weight:500;">${t.deadline || '—'}</td>
+      <td style="text-align:center;">${statusBadge(t.status, t.days)}</td>
+      <td style="text-align:center;">
+        <span style="font-size:12px;font-weight:700;color:${daysColor(t.days)};">${t.days >= 0 && t.days < 999 ? t.days+'d' : '—'}</span>
+      </td>
+      <td style="text-align:center;">${isEnergy ? '<span style="font-size:13px;">⚡</span>' : ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════
+//  RENDER SOURCES
+// ══════════════════════════════════════════════
+
+function renderSources() {
+  const grid = document.getElementById('sources-grid');
+  grid.innerHTML = SOURCES.map((s, i) => `
+    <div class="glass-card source-card ${s.live ? 'live' : ''}" style="padding:22px;animation:pageIn 0.4s ${i*0.06}s ease both;opacity:0;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <div>
+          <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:600;color:#f1f5f9;margin-bottom:4px;">${s.name}</div>
+          <div style="font-size:12px;color:var(--slate-500);">${s.desc}</div>
+        </div>
+        <div class="${s.live ? 'dot-live' : 'dot-error'}" style="margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;background:var(--slate-800);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:${s.color};">${s.count}</div>
+          <div style="font-size:10px;color:var(--slate-500);margin-top:2px;">Active Tenders</div>
+        </div>
+        <div style="flex:1;background:var(--slate-800);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:12px;font-weight:600;color:var(--slate-200);margin-top:4px;">${s.last}</div>
+          <div style="font-size:10px;color:var(--slate-500);margin-top:2px;">Last Synced</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div style="flex:1;padding:8px;border-radius:8px;background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.12);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:500;color:var(--teal-400);cursor:pointer;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Sync
+        </div>
+        <div style="flex:1;padding:8px;border-radius:8px;background:var(--slate-800);border:1px solid rgba(51,65,85,0.5);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:500;color:var(--slate-400);cursor:pointer;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          Visit
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ══════════════════════════════════════════════
+//  FILTER + SEARCH
+// ══════════════════════════════════════════════
+
+// All scraped sources are already filtered for Mongolia on the backend
+// so we trust all API sources and skip client-side Mongolia filtering
+function isMongolia(t) {
+  return true;
+}
+
+function goToTenders(filter) {
+  const navEl = Array.from(document.querySelectorAll('.nav-item')).find(n => n.getAttribute('onclick')?.includes("'tenders'"));
+  showPage('tenders', navEl);
+  activeFilters = new Set(['all']);
+  activeTypeFilters = new Set(['all']);
+  searchQuery = '';
+  document.querySelectorAll('#page-tenders .filter-pill[data-group]').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('#page-tenders .filter-pill[data-val="all"]').forEach(p => p.classList.add('active'));
+  if (filter === 'urgent') {
+    TENDERS.sort((a,b) => a.days - b.days);
+  } else if (filter === 'new') {
+    TENDERS.sort((a,b) => b.id - a.id);
+  }
+  renderTable();
+}
+
+async function setFilter(el, val) {
+  toggleMulti(activeFilters, val, el, '#page-tenders .filter-pill[data-group="source"]');
+  await reloadByFilters();
+  renderTable();
+}
+
+async function reloadByFilters() {
+  const sources = activeFilters.has('all') ? [] : [...activeFilters];
+  if (sources.length === 0) {
+    // All sources — load once
+    await loadTenders(null, searchQuery || null);
+  } else if (sources.length === 1) {
+    await loadTenders(sources[0], searchQuery || null);
+  } else {
+    // Multiple sources — load each separately and merge
+    const all = [];
+    const seen = new Set();
+    for (const src of sources) {
+      const items = await loadTenders(src, searchQuery || null);
+      for (const t of items) {
+        if (!seen.has(t.id)) { seen.add(t.id); all.push(t); }
+      }
+    }
+    TENDERS = all;
+  }
+}
+
+function exportCSV() {
+  const rows = TENDERS.filter(t => {
+    const matchSearch = !searchQuery || t.name.toLowerCase().includes(searchQuery);
+    const matchEnergy = !energyOnly || isEnergyTender(t);
+    const matchType = activeTypeFilter === 'all' || classifyType(t).key === activeTypeFilter;
+    return matchSearch && matchEnergy && matchType;
+  });
+  const header = ['Name','Source','Type','Category','Deadline','Days','URL'];
+  const csv = [header, ...rows.map(t => [
+    `"${t.name.replace(/"/g,'""')}"`,
+    t.source, classifyType(t).label, t.cat,
+    t.deadline, t.days < 999 ? t.days : '',
+    t.url,
+  ])].map(r => r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+  a.download = `tenders_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function filterTenders(val) {
+  searchQuery = val.toLowerCase();
+  renderTable();
+}
+
+// ══════════════════════════════════════════════
+//  SYNC
+// ══════════════════════════════════════════════
+
+let syncInterval = null;
+
+async function simulateSync() {
+  const icon = document.getElementById('sync-icon');
+  const btn  = icon.closest('button');
+  btn.disabled = true;
+
+  // Spinning animation
+  let deg = 0;
+  syncInterval = setInterval(() => {
+    deg += 20;
+    icon.style.transform = `rotate(${deg}deg)`;
+  }, 40);
+
+  try {
+    if (API_ONLINE) {
+      await apiFetch("/sync", { method: "POST" });
+      // Poll until sync settles (~6s)
+      await new Promise(r => setTimeout(r, 6000));
+    }
+  } catch (e) { /* offline — just animate */ }
+
+  clearInterval(syncInterval);
+  icon.style.transform = '';
+  btn.disabled = false;
+
+  // Reload data
+  await loadAll();
+}
+
+// ══════════════════════════════════════════════
+//  ANIMATED COUNTER
+// ══════════════════════════════════════════════
+
+function animateCount(el, target, duration = 1000) {
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start = Math.min(start + step, target);
+    el.textContent = Math.floor(start);
+    if (start >= target) clearInterval(timer);
+  }, 16);
+}
+
+// ══════════════════════════════════════════════
+//  SOURCES from API
+// ══════════════════════════════════════════════
+
+async function loadSources() {
+  try {
+    const data = await apiFetch("/stats");
+    if (data && data.sources) {
+      renderSources(data.sources);
+    }
+  } catch (e) {
+    renderSources(null); // fallback to static
+  }
+}
+
+function renderSources(apiSources) {
+  const grid = document.getElementById('sources-grid');
+  const STATIC = [
+    { name:'tender.gov.mn', desc:'Засгийн газрын нийтийн худалдан авалтын портал', color:'#2563EB' },
+    { name:'ADB',           desc:'Азийн хөгжлийн банк — Монгол дахь төслүүд',     color:'#D97706' },
+    { name:'World Bank',    desc:'Дэлхийн банкны худалдан авалтын мэдэгдэл',      color:'#059669' },
+    { name:'EBRD',          desc:'Европын сэргээн босголт, хөгжлийн банк',        color:'#7C3AED' },
+    { name:'OT.mn / OASIS', desc:'Оюу Толгойн EOI — ot.mn/mn/procurement/eoi',   color:'#D97706' },
+    { name:'Energy.gov.mn', desc:'Эрчим хүчний яамны тендер зарлалууд',          color:'#EA580C' },
+  ];
+
+  const sources = (apiSources || []).length > 0
+    ? STATIC.map(s => {
+        const api = (apiSources || []).find(a => a.name === s.name) || {};
+        return { ...s,
+          live: api.live !== undefined ? api.live : true,
+          count: api.count || 0,
+          last: api.last || 'Never',
+          error: api.error || '',
+          running: api.running || false,
+        };
+      })
+    : STATIC.map(s => ({ ...s, live: true, count: 0, last: 'Pending', error: '', running: false }));
+
+  grid.innerHTML = sources.map((s, i) => `
+    <div class="glass-card source-card ${s.live ? 'live' : ''}" style="padding:22px;animation:pageIn 0.4s ${i*0.06}s ease both;opacity:0;border-top:3px solid ${s.color};">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
+        <div>
+          <div style="font-family:'Sora',sans-serif;font-size:15px;font-weight:700;color:#111111;margin-bottom:4px;">${s.name}</div>
+          <div style="font-size:12px;color:#666666;">${s.desc}</div>
+          ${s.error ? `<div style="font-size:10px;color:var(--rose-400);margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;" title="${s.error}">⚠ ${s.error}</div>` : ''}
+        </div>
+        <div class="${s.live ? 'dot-live' : 'dot-error'}" style="margin-top:4px;"></div>
+      </div>
+      <div style="display:flex;gap:12px;margin-bottom:16px;">
+        <div style="flex:1;background:#F8F9FA;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-family:'Sora',sans-serif;font-size:22px;font-weight:700;color:${s.color};">${s.count}</div>
+          <div style="font-size:10px;color:#888;margin-top:2px;">Active Tenders</div>
+        </div>
+        <div style="flex:1;background:#F8F9FA;border:1px solid var(--border);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:12px;font-weight:600;color:#333;margin-top:4px;">${s.running ? '⟳ Syncing…' : s.last}</div>
+          <div style="font-size:10px;color:#888;margin-top:2px;">Last Synced</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;">
+        <div onclick="syncSource('${s.name}', this)" style="flex:1;padding:8px;border-radius:8px;background:rgba(20,184,166,0.06);border:1px solid rgba(20,184,166,0.12);display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;font-weight:500;color:var(--teal-400);cursor:pointer;">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          Sync
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function syncSource(name, el) {
+  el.style.opacity = '0.5';
+  try {
+    await apiFetch(`/sync?source=${encodeURIComponent(name)}`, { method: "POST" });
+    await new Promise(r => setTimeout(r, 4000));
+    await loadSources();
+  } catch (e) {
+    el.style.opacity = '1';
+  }
+}
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+
+async function loadAll() {
+  const [statsData] = await Promise.all([
+    loadStats(),
+    loadTenders(null, searchQuery || null),
+  ]);
+  renderFeed();
+  renderTable();
+  renderUrgentList();
+  await loadSources();
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+  initSortHeaders();
+  renderFeed();
+  renderTable();
+  renderSources(null);
+
+  // Then load real data
+  await loadAll();
+
+  // Counter animation (will be overwritten by API data if available)
+  if (!API_ONLINE) {
+    animateCount(document.getElementById('counter-active'), 47, 800);
+  }
+
+  // Auto-refresh stats every 2 minutes
+  setInterval(loadAll, 120_000);
+});
+</script>
+</body>
+</html>
