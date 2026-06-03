@@ -898,6 +898,7 @@ async function loadTenders(source, search) {
     const params = new URLSearchParams({ limit: 200 });
     if (source && source !== "all") params.set("source", source);
     if (search) params.set("search", search);
+    params.set("limit", "500");
     const data = await apiFetch(`/tenders?${params}`);
     TENDERS = (data.tenders || []).map(normalizeTender);
     API_ONLINE = true;
@@ -1367,24 +1368,8 @@ async function setFilter(el, val) {
 }
 
 async function reloadByFilters() {
-  const sources = activeFilters.has('all') ? [] : [...activeFilters];
-  if (sources.length === 0) {
-    // All sources — load once
-    await loadTenders(null, searchQuery || null);
-  } else if (sources.length === 1) {
-    await loadTenders(sources[0], searchQuery || null);
-  } else {
-    // Multiple sources — load each separately and merge
-    const all = [];
-    const seen = new Set();
-    for (const src of sources) {
-      const items = await loadTenders(src, searchQuery || null);
-      for (const t of items) {
-        if (!seen.has(t.id)) { seen.add(t.id); all.push(t); }
-      }
-    }
-    TENDERS = all;
-  }
+  // Always load all tenders, filtering done client-side in renderTable
+  await loadTenders(null, searchQuery || null);
 }
 
 function exportCSV() {
