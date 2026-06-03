@@ -3,6 +3,12 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#111111" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="MCSI Tenders" />
+  <link rel="manifest" href="manifest.json" />
   <title>MCSI Tender Monitor</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -460,12 +466,108 @@
     .sort-icon { font-size: 10px; color: #ccc; }
     .sortable-th.sort-asc .sort-icon,
     .sortable-th.sort-desc .sort-icon { color: #0D9488; }
+
+  /* ══════════════════════════════════
+     MOBILE RESPONSIVE
+  ══════════════════════════════════ */
+  .mob-menu-btn {
+    display: none;
+    position: fixed; top: 14px; left: 14px; z-index: 200;
+    background: #111; border: none; border-radius: 10px;
+    width: 40px; height: 40px; cursor: pointer;
+    align-items: center; justify-content: center;
+  }
+  .sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+    z-index: 49;
+  }
+  /* Bottom nav for mobile */
+  .bottom-nav {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: #111; border-top: 1px solid #222;
+    z-index: 100; padding: 8px 0 12px;
+    justify-content: space-around; align-items: center;
+  }
+  .bottom-nav-item {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 3px; color: #777; font-size: 10px; cursor: pointer;
+    padding: 4px 16px;
+  }
+  .bottom-nav-item.active { color: #C8FF00; }
+
+  @media (max-width: 768px) {
+    .sidebar { transform: translateX(-260px); }
+    .sidebar.open { transform: translateX(0); }
+    .sidebar-overlay.open { display: block; }
+    .main-content { margin-left: 0 !important; padding-bottom: 80px; }
+    .mob-menu-btn { display: flex; }
+    .bottom-nav { display: flex; }
+
+    /* Stack 4-col KPI grid to 2x2 */
+    div[style*="repeat(4,1fr)"] {
+      grid-template-columns: repeat(2,1fr) !important;
+      gap: 12px !important;
+    }
+    /* Stack 2-col grids to 1 col */
+    div[style*="grid-template-columns:1fr 1fr"] {
+      grid-template-columns: 1fr !important;
+    }
+    /* Stack 3-col source grid to 1 col */
+    div[style*="repeat(3,1fr)"] {
+      grid-template-columns: 1fr !important;
+    }
+    /* Page padding */
+    .main-content > div { padding: 16px !important; }
+    /* Table horizontal scroll */
+    .tender-table { font-size: 11px; }
+    .tender-table th, .tender-table td { padding: 8px 6px !important; }
+    /* Hide less important columns on mobile */
+    .tender-table colgroup col:nth-child(2),
+    .tender-table thead th:nth-child(2),
+    .tender-table tbody td:nth-child(2),
+    .tender-table colgroup col:nth-child(4),
+    .tender-table thead th:nth-child(4),
+    .tender-table tbody td:nth-child(4) { display: none; }
+    /* Sync button smaller */
+    .btn-primary { padding: 8px 14px; font-size: 12px; }
+    /* Search hidden on mobile */
+    .search-box { display: none; }
+    /* Page header margin */
+    div[style*="padding:32px"] { padding: 16px !important; }
+    div[style*="padding:24px"] { padding: 16px !important; }
+  }
   </style>
 </head>
 <body>
 
+<!-- Mobile hamburger -->
+<button class="mob-menu-btn" onclick="toggleSidebar()">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2">
+    <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+  </svg>
+</button>
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- Bottom navigation -->
+<nav class="bottom-nav">
+  <div class="bottom-nav-item active" id="bn-dashboard" onclick="showPage('dashboard',null);setBottomNav('bn-dashboard')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+    Dashboard
+  </div>
+  <div class="bottom-nav-item" id="bn-tenders" onclick="showPage('tenders',null);setBottomNav('bn-tenders')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+    Tenders
+  </div>
+  <div class="bottom-nav-item" id="bn-sources" onclick="showPage('sources',null);setBottomNav('bn-sources')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+    Sources
+  </div>
+</nav>
+
 <!-- ═══════════════════════════════════════════ SIDEBAR ═══ -->
-<aside class="sidebar">
+<aside class="sidebar" id="main-sidebar">
   <!-- Logo -->
   <div style="padding: 20px 20px 16px;">
     <div style="display:flex; flex-direction:column; gap:6px;">
@@ -1630,6 +1732,24 @@ document.addEventListener('DOMContentLoaded', async () => {
   // Auto-refresh stats every 2 minutes
   setInterval(loadAll, 120_000);
 });
+
+// ══════════════════════════════════════════════
+//  MOBILE HELPERS
+// ══════════════════════════════════════════════
+function toggleSidebar() {
+  const sidebar = document.getElementById('main-sidebar');
+  const overlay = document.getElementById('sidebar-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('open');
+}
+function setBottomNav(id) {
+  document.querySelectorAll('.bottom-nav-item').forEach(el => el.classList.remove('active'));
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  // Close sidebar on mobile nav tap
+  document.getElementById('main-sidebar')?.classList.remove('open');
+  document.getElementById('sidebar-overlay')?.classList.remove('open');
+}
 
 // ══════════════════════════════════════════════
 //  TENDER DETAIL MODAL

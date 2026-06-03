@@ -6,6 +6,7 @@ on:
     paths:
       - "mcsi-tender-monitor.html"
       - "MCSI HR Товчилсон.png"
+      - "manifest.json"
   workflow_dispatch:
 
 permissions:
@@ -36,6 +37,7 @@ jobs:
           mkdir -p _site
           cp mcsi-tender-monitor.html _site/index.html
           cp "MCSI HR Товчилсон.png" _site/ 2>/dev/null || true
+          cp manifest.json _site/ 2>/dev/null || true
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
