@@ -24,6 +24,7 @@ async def scrape() -> list[dict]:
                 "os": (page - 1) * 50,
                 "sort": "noticedate",
                 "order": "desc",
+                "srce": "both",
             }
             try:
                 resp = await client.get(API_URL, params=params)
