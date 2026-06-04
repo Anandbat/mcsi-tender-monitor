@@ -1723,12 +1723,26 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTable();
   renderSources(null);
 
-  // Then load real data
-  await loadAll();
+  // Show waking up message if first load takes long
+  const wakeTimer = setTimeout(() => {
+    const sub = document.getElementById('page-sub');
+    if (!API_ONLINE && sub) sub.innerHTML = `<span style="color:#F59E0B;">⏳ Server waking up... (~30 sec)</span>`;
+  }, 5000);
 
-  // Counter animation (will be overwritten by API data if available)
+  // First load
+  await loadAll();
+  clearTimeout(wakeTimer);
+
+  // If still offline, retry every 15s up to 4 times
   if (!API_ONLINE) {
-    animateCount(document.getElementById('counter-active'), 47, 800);
+    let retries = 0;
+    const retryInterval = setInterval(async () => {
+      retries++;
+      await loadAll();
+      if (API_ONLINE || retries >= 4) {
+        clearInterval(retryInterval);
+      }
+    }, 15000);
   }
 
   // Auto-refresh stats every 2 minutes
