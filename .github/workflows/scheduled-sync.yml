@@ -1,0 +1,20 @@
+name: Scheduled Sync
+
+on:
+  schedule:
+    - cron: '0 1 * * *'   # 09:00 Ulaanbaatar (UTC+8)
+    - cron: '0 5 * * *'   # 13:00 Ulaanbaatar
+    - cron: '0 10 * * *'  # 18:00 Ulaanbaatar
+  workflow_dispatch:       # Manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake up Render & trigger sync
+        run: |
+          echo "Triggering sync at $(date)"
+          curl -s -X POST "${{ secrets.RENDER_API_URL }}/sync" \
+            -H "Content-Type: application/json" \
+            --max-time 90 \
+            -w "\nHTTP Status: %{http_code}\n" || echo "Sync triggered (server may be waking up)"
