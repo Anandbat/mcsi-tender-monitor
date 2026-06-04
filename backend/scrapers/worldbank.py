@@ -16,6 +16,7 @@ async def scrape() -> list[dict]:
     async with make_client() as client:
         page = 1
         seen = set()
+        today = __import__('datetime').date.today().strftime("%Y%m%d")
         while len(results) < 300:
             params = {
                 "project_ctry_name": "Mongolia",
@@ -25,6 +26,7 @@ async def scrape() -> list[dict]:
                 "sort": "noticedate",
                 "order": "desc",
                 "srce": "both",
+                "deadline_from": today,
             }
             try:
                 resp = await client.get(API_URL, params=params)
