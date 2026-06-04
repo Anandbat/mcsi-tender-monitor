@@ -15,17 +15,19 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@400;600;700&display=swap" rel="stylesheet" />
   <style>
     :root {
-      /* MCSI Brand */
-      --lime:      #C8FF00;
-      --lime-dim:  #A8D900;
-      --lime-glow: rgba(200,255,0,0.15);
-      --lime-soft: rgba(200,255,0,0.08);
+      /* MCSI Brand — Navy */
+      --lime:      #1B2B41;
+      --lime-dim:  #243652;
+      --lime-glow: rgba(27,43,65,0.15);
+      --lime-soft: rgba(27,43,65,0.06);
+      --accent:    #3B82F6;
+      --accent-dim:#2563EB;
 
-      /* Backgrounds — light charcoal, not pitch black */
-      --bg-main:   #F4F6F8;
+      /* Backgrounds */
+      --bg-main:   #F8FAFC;
       --bg-card:   #FFFFFF;
-      --bg-sidebar:#111111;
-      --bg-hover:  #F0F2F5;
+      --bg-sidebar:#1B2B41;
+      --bg-hover:  #F1F5F9;
 
       /* Text */
       --text-900:  #0D0D0D;
@@ -89,8 +91,8 @@
 
     /* ── Logo Pulse ── */
     @keyframes logoPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(200,255,0,0.4); }
-      50% { box-shadow: 0 0 0 8px rgba(200,255,0,0); }
+      0%, 100% { box-shadow: 0 0 0 0 rgba(59,130,246,0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(59,130,246,0); }
     }
     .logo-mark {
       animation: logoPulse 3s ease-in-out infinite;
@@ -116,22 +118,22 @@
     .nav-item::before {
       content: '';
       position: absolute; inset: 0;
-      background: linear-gradient(90deg, rgba(200,255,0,0.06), transparent);
+      background: linear-gradient(90deg, rgba(59,130,246,0.10), transparent);
       opacity: 0;
       transition: opacity 0.2s;
     }
     .nav-item:hover { color: #FFFFFF; }
     .nav-item:hover::before { opacity: 1; }
     .nav-item.active {
-      color: var(--lime);
-      background: rgba(200,255,0,0.08);
+      color: #FFFFFF;
+      background: rgba(59,130,246,0.15);
     }
     .nav-item.active::before { opacity: 1; }
     .nav-item.active::after {
       content: '';
       position: absolute; right: 0; top: 20%; bottom: 20%;
       width: 3px;
-      background: var(--lime);
+      background: #3B82F6;
       border-radius: 2px 0 0 2px;
     }
 
@@ -146,8 +148,8 @@
       box-shadow: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
     }
     .glass-card:hover {
-      border-color: rgba(200,255,0,0.4);
-      box-shadow: 0 4px 24px rgba(200,255,0,0.08), 0 1px 3px rgba(0,0,0,0.06);
+      border-color: rgba(59,130,246,0.3);
+      box-shadow: 0 4px 24px rgba(59,130,246,0.08), 0 1px 3px rgba(0,0,0,0.06);
     }
     .glass-card::before {
       content: '';
@@ -405,8 +407,8 @@
 
     /* ── Buttons ── */
     .btn-primary {
-      background: var(--lime);
-      color: #0D0D0D;
+      background: #1B2B41;
+      color: #FFFFFF;
       border: none;
       border-radius: 10px;
       padding: 10px 20px;
@@ -417,8 +419,8 @@
       display: flex; align-items: center; gap: 8px;
     }
     .btn-primary:hover {
-      background: #D4FF1A;
-      box-shadow: 0 4px 20px rgba(200,255,0,0.4);
+      background: #243652;
+      box-shadow: 0 4px 20px rgba(27,43,65,0.3);
       transform: translateY(-1px);
     }
     .btn-ghost {
@@ -473,7 +475,7 @@
   .mob-menu-btn {
     display: none;
     position: fixed; top: 14px; left: 14px; z-index: 200;
-    background: #111; border: none; border-radius: 10px;
+    background: #1B2B41; border: none; border-radius: 10px;
     width: 40px; height: 40px; cursor: pointer;
     align-items: center; justify-content: center;
   }
@@ -486,7 +488,7 @@
   .bottom-nav {
     display: none;
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: #111; border-top: 1px solid #222;
+    background: #1B2B41; border-top: 1px solid #243652;
     z-index: 100; padding: 8px 0 12px;
     justify-content: space-around; align-items: center;
   }
@@ -495,7 +497,7 @@
     gap: 3px; color: #777; font-size: 10px; cursor: pointer;
     padding: 4px 16px;
   }
-  .bottom-nav-item.active { color: #C8FF00; }
+  .bottom-nav-item.active { color: #3B82F6; }
 
   @media (max-width: 768px) {
     .sidebar { transform: translateX(-260px); }
@@ -544,7 +546,7 @@
 
 <!-- Mobile hamburger -->
 <button class="mob-menu-btn" onclick="toggleSidebar()">
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2">
+  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" stroke-width="2">
     <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
   </svg>
 </button>
