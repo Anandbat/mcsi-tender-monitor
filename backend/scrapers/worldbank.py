@@ -16,12 +16,14 @@ async def scrape() -> list[dict]:
     async with make_client() as client:
         page = 1
         seen = set()
-        while len(results) < 200:
+        while len(results) < 300:
             params = {
                 "project_ctry_name": "Mongolia",
                 "format": "json",
                 "rows": 50,
                 "os": (page - 1) * 50,
+                "sort": "noticedate",
+                "order": "desc",
             }
             try:
                 resp = await client.get(API_URL, params=params)
@@ -91,7 +93,7 @@ async def scrape() -> list[dict]:
                 })
 
             total = int(data.get("total", 0))
-            if page * 50 >= total or page * 50 >= 200:
+            if page * 50 >= total or page * 50 >= 300:
                 break
             page += 1
 
