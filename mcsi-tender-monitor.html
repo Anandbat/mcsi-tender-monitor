@@ -1554,19 +1554,29 @@ function exportCSV() {
   const rows = TENDERS.filter(t => {
     const matchSearch = !searchQuery || t.name.toLowerCase().includes(searchQuery);
     const matchEnergy = !energyOnly || isEnergyTender(t);
-    const matchType = activeTypeFilter === 'all' || classifyType(t).key === activeTypeFilter;
-    return matchSearch && matchEnergy && matchType;
+    const typeKey = classifyType(t).key;
+    const matchType = activeTypeFilters.has('all') || activeTypeFilters.has(typeKey);
+    const matchSource = activeFilters.has('all') ||
+      [...activeFilters].some(f => t.source.toLowerCase().includes(f.toLowerCase()));
+    const matchExpiry = showExpired || t.days >= 0;
+    const matchUrgent = !_urgentOnly || (t.days >= 0 && t.days <= 7);
+    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry && matchUrgent;
   });
-  const header = ['Name','Source','Type','Category','Deadline','Days','URL'];
+  const header = ['Name','Source','Type','Category','Client','Posted','Deadline','Days Left','URL'];
   const csv = [header, ...rows.map(t => [
-    `"${t.name.replace(/"/g,'""')}"`,
-    t.source, classifyType(t).label, t.cat,
-    t.deadline, t.days < 999 ? t.days : '',
-    t.url,
+    `"${(t.name||'').replace(/"/g,'""')}"`,
+    t.source,
+    classifyType(t).label,
+    `"${(t.cat||'').replace(/"/g,'""')}"`,
+    `"${(t.client||'').replace(/"/g,'""')}"`,
+    t.posted || '',
+    t.deadline || '',
+    t.days >= 0 && t.days < 999 ? t.days : '',
+    t.url || '',
   ])].map(r => r.join(',')).join('\n');
   const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
-  a.download = `tenders_${new Date().toISOString().slice(0,10)}.csv`;
+  a.href = 'data:text/csv;charset=utf-8,﻿' + encodeURIComponent(csv);
+  a.download = `MCSI_Tenders_${new Date().toISOString().slice(0,10)}.csv`;
   a.click();
 }
 
