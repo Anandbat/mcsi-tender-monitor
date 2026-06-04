@@ -1010,7 +1010,7 @@ async function loadTenders(source, search) {
     const params = new URLSearchParams({ limit: 200 });
     if (source && source !== "all") params.set("source", source);
     if (search) params.set("search", search);
-    params.set("limit", "500");
+    params.set("limit", "1000");
     const data = await apiFetch(`/tenders?${params}`);
     TENDERS = (data.tenders || []).map(normalizeTender);
     API_ONLINE = true;

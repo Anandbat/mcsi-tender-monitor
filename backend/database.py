@@ -70,7 +70,7 @@ async def get_tenders(source: str = None, search: str = None, limit: int = 200) 
     params.append(limit)
     async with pool.acquire() as conn:
         rows = await conn.fetch(
-            f"SELECT * FROM tenders {where} ORDER BY posted_at DESC NULLS LAST, fetched_at DESC LIMIT ${idx}",
+            f"SELECT * FROM tenders {where} ORDER BY fetched_at DESC, posted_at DESC NULLS LAST LIMIT ${idx}",
             *params
         )
     return [dict(r) for r in rows]

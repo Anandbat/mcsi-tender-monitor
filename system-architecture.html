@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MCSI Tender Monitor — System Architecture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Sora:wght@600;700&display=swap" rel="stylesheet"/>
+  <style>
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:'Inter',sans-serif;background:#F8FAFC;color:#1e293b;min-height:100vh}
+
+    .page{max-width:1200px;margin:0 auto;padding:40px 24px 60px}
+
+    /* Header */
+    .header{display:flex;align-items:center;gap:16px;margin-bottom:48px}
+    .logo-wrap{width:48px;height:48px;background:#1B2B41;border-radius:12px;display:flex;align-items:center;justify-content:center}
+    .header-text h1{font-family:'Sora',sans-serif;font-size:24px;font-weight:700;color:#1B2B41}
+    .header-text p{font-size:13px;color:#64748b;margin-top:2px}
+
+    /* Layer labels */
+    .layer-label{font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:#94a3b8;margin-bottom:12px;padding-left:4px}
+
+    /* Source cards */
+    .sources-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:8px}
+    .source-card{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:14px 10px;text-align:center;box-shadow:0 1px 4px rgba(0,0,0,0.06);transition:all 0.2s}
+    .source-card:hover{border-color:#3B82F6;box-shadow:0 4px 16px rgba(59,130,246,0.12);transform:translateY(-2px)}
+    .source-card .icon{width:36px;height:36px;border-radius:8px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+    .source-card .name{font-size:11px;font-weight:600;color:#334155}
+    .source-card .badge{display:inline-block;font-size:9px;font-weight:600;padding:2px 6px;border-radius:20px;margin-top:4px}
+    .badge-local{background:#FEF3C7;color:#D97706}
+    .badge-auto{background:#D1FAE5;color:#059669}
+
+    /* Arrow connector */
+    .arrow-down{display:flex;justify-content:center;align-items:center;height:40px;gap:8px}
+    .arrow-line{width:2px;height:100%;background:linear-gradient(to bottom,#CBD5E1,#94A3B8)}
+    .arrow-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;height:40px;margin-bottom:8px}
+    .arrow-col{display:flex;justify-content:center;align-items:center;flex-direction:column;gap:0}
+    .vline{width:2px;flex:1;background:#CBD5E1}
+    .arrowhead{width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:7px solid #94A3B8}
+
+    /* Scraper layer */
+    .scrapers-row{display:grid;grid-template-columns:1fr 4fr;gap:16px;margin-bottom:8px}
+    .scraper-local{background:#FFF7ED;border:1.5px dashed #F59E0B;border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center}
+    .scraper-local .title{font-size:12px;font-weight:700;color:#D97706}
+    .scraper-local .sub{font-size:10px;color:#92400E;line-height:1.4}
+    .scraper-server{background:#F0FDF4;border:1.5px dashed #10B981;border-radius:12px;padding:16px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:6px;text-align:center}
+    .scraper-server .title{font-size:12px;font-weight:700;color:#059669}
+    .scraper-server .sub{font-size:10px;color:#065F46;line-height:1.4}
+
+    /* Main arrow */
+    .main-arrow{display:flex;justify-content:center;align-items:center;height:48px;position:relative}
+    .main-arrow-line{width:2px;height:100%;background:linear-gradient(to bottom,#94A3B8,#1B2B41)}
+    .main-arrowhead{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:10px solid #1B2B41}
+
+    /* Core nodes */
+    .node{border-radius:16px;padding:20px 24px;margin-bottom:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08)}
+    .node-db{background:#1B2B41;color:#fff}
+    .node-api{background:#1B2B41;color:#fff}
+    .node-fe{background:#fff;border:2px solid #1B2B41}
+
+    .node-title{font-family:'Sora',sans-serif;font-size:15px;font-weight:700;margin-bottom:4px}
+    .node-sub{font-size:12px;opacity:0.7;margin-bottom:12px}
+    .node-db .node-sub,.node-api .node-sub{color:#94A3B8}
+
+    .chips-row{display:flex;flex-wrap:wrap;gap:6px}
+    .chip{font-size:11px;font-weight:500;padding:4px 10px;border-radius:20px}
+    .chip-light{background:rgba(255,255,255,0.12);color:#e2e8f0}
+    .chip-dark{background:#EFF6FF;color:#1D4ED8}
+    .chip-green{background:#F0FDF4;color:#15803D}
+    .chip-orange{background:#FFF7ED;color:#C2410C}
+
+    .node-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px}
+    .node-info{display:flex;align-items:center;gap:8px;margin-top:10px}
+    .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .dot-green{background:#10B981}
+    .dot-blue{background:#3B82F6}
+    .node-info-text{font-size:11px;opacity:0.75}
+
+    /* Schedule box */
+    .schedule-box{background:#EFF6FF;border:1.5px solid #BFDBFE;border-radius:12px;padding:16px;margin-bottom:8px}
+    .schedule-title{font-size:12px;font-weight:700;color:#1D4ED8;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .schedule-times{display:flex;gap:8px;flex-wrap:wrap}
+    .time-chip{background:#1D4ED8;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px}
+
+    /* Frontend */
+    .fe-pages{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+    .fe-page{background:#F8FAFC;border:1px solid #E2E8F0;border-radius:10px;padding:12px;text-align:center}
+    .fe-page .page-icon{width:32px;height:32px;border-radius:8px;background:#1B2B41;margin:0 auto 8px;display:flex;align-items:center;justify-content:center}
+    .fe-page .page-name{font-size:12px;font-weight:600;color:#334155}
+    .fe-page .page-desc{font-size:10px;color:#94a3b8;margin-top:2px}
+
+    /* User */
+    .user-node{background:#fff;border:2px solid #E2E8F0;border-radius:16px;padding:20px;text-align:center;display:flex;align-items:center;justify-content:center;gap:16px;margin-bottom:8px}
+    .user-avatar{width:48px;height:48px;background:#1B2B41;border-radius:50%;display:flex;align-items:center;justify-content:center}
+    .user-text h3{font-size:15px;font-weight:700;color:#1B2B41}
+    .user-text p{font-size:12px;color:#64748b;margin-top:2px}
+
+    /* Side annotations */
+    .with-side{display:grid;grid-template-columns:1fr 220px;gap:16px;align-items:start}
+    .side-note{background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:16px;height:100%}
+    .side-note-title{font-size:11px;font-weight:700;color:#1B2B41;margin-bottom:10px;display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:0.05em}
+    .side-item{display:flex;align-items:flex-start;gap:8px;margin-bottom:8px}
+    .side-dot{width:6px;height:6px;border-radius:50%;background:#3B82F6;flex-shrink:0;margin-top:4px}
+    .side-text{font-size:11px;color:#475569;line-height:1.5}
+
+    @media(max-width:768px){
+      .sources-row{grid-template-columns:repeat(3,1fr)}
+      .arrow-row{grid-template-columns:repeat(3,1fr)}
+      .scrapers-row{grid-template-columns:1fr}
+      .node-row{grid-template-columns:1fr}
+      .with-side{grid-template-columns:1fr}
+      .fe-pages{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="logo-wrap">
+      <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+        <path d="M16 4L28 10V22L16 28L4 22V10L16 4Z" stroke="#C8FF00" stroke-width="2" fill="none"/>
+        <path d="M16 4L16 28M4 10L28 22M28 10L4 22" stroke="#C8FF00" stroke-width="1.5" opacity="0.5"/>
+      </svg>
+    </div>
+    <div class="header-text">
+      <h1>MCSI Tender Monitor — System Architecture</h1>
+      <p>End-to-end data flow from procurement sources to end user</p>
+    </div>
+  </div>
+
+  <!-- LAYER 1: DATA SOURCES -->
+  <div class="layer-label">Layer 1 — Data Sources</div>
+  <div class="sources-row">
+    <div class="source-card">
+      <div class="icon" style="background:#EFF6FF">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 010 20M12 2a15 15 0 000 20"/></svg>
+      </div>
+      <div class="name">tender.gov.mn</div>
+      <span class="badge badge-local">Local only</span>
+    </div>
+    <div class="source-card">
+      <div class="icon" style="background:#F0FDF4">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#15803D" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>
+      </div>
+      <div class="name">World Bank</div>
+      <span class="badge badge-auto">Auto</span>
+    </div>
+    <div class="source-card">
+      <div class="icon" style="background:#FFF7ED">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C2410C" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+      <div class="name">ADB</div>
+      <span class="badge badge-auto">Auto</span>
+    </div>
+    <div class="source-card">
+      <div class="icon" style="background:#F5F3FF">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#7C3AED" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 12h8M12 8v8"/></svg>
+      </div>
+      <div class="name">EBRD</div>
+      <span class="badge badge-auto">Auto</span>
+    </div>
+    <div class="source-card">
+      <div class="icon" style="background:#FFFBEB">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+      </div>
+      <div class="name">Energy.gov.mn</div>
+      <span class="badge badge-auto">Auto</span>
+    </div>
+  </div>
+
+  <!-- Arrows down -->
+  <div class="arrow-row">
+    <div class="arrow-col"><div class="vline"></div><div class="arrowhead"></div></div>
+    <div class="arrow-col"><div class="vline"></div><div class="arrowhead"></div></div>
+    <div class="arrow-col"><div class="vline"></div><div class="arrowhead"></div></div>
+    <div class="arrow-col"><div class="vline"></div><div class="arrowhead"></div></div>
+    <div class="arrow-col"><div class="vline"></div><div class="arrowhead"></div></div>
+  </div>
+
+  <!-- LAYER 2: SCRAPERS -->
+  <div class="layer-label">Layer 2 — Python Scrapers</div>
+  <div class="scrapers-row" style="margin-bottom:8px">
+    <div class="scraper-local">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#D97706" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+      <div class="title">tendergov.py</div>
+      <div class="sub">Локал компьютер дээр<br/>cookies шаардлагатай<br/>curl_cffi · Cloudflare bypass</div>
+      <div style="background:#FEF3C7;border-radius:6px;padding:4px 8px;font-size:9px;font-weight:600;color:#92400E;margin-top:4px">sync_tendergov.bat</div>
+    </div>
+    <div class="scraper-server">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#059669" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2"/><rect x="2" y="14" width="20" height="8" rx="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+      <div class="title">worldbank.py · adb.py · ebrd.py · energy.py</div>
+      <div class="sub">Render.com сервер дээр автоматаар ажилладаг<br/>httpx · BeautifulSoup4 · REST API</div>
+      <div style="display:flex;gap:6px;margin-top:4px;justify-content:center">
+        <div style="background:#D1FAE5;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:600;color:#065F46">APScheduler 2h</div>
+        <div style="background:#DBEAFE;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:600;color:#1E40AF">GitHub Actions</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main arrow -->
+  <div class="main-arrow" style="margin-bottom:8px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div style="width:2px;height:20px;background:linear-gradient(to bottom,#94A3B8,#1B2B41)"></div>
+      <div class="main-arrowhead"></div>
+    </div>
+  </div>
+
+  <!-- LAYER 3: DATABASE + SCHEDULE side by side -->
+  <div class="layer-label">Layer 3 — Database & Automation</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:8px">
+    <div class="node node-db">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+        <div style="width:36px;height:36px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></svg>
+        </div>
+        <div>
+          <div class="node-title">Supabase PostgreSQL</div>
+          <div class="node-sub">Northeast Asia · Seoul · Nano</div>
+        </div>
+      </div>
+      <div class="chips-row">
+        <span class="chip chip-light">~415 tenders</span>
+        <span class="chip chip-light">tenders table</span>
+        <span class="chip chip-light">sync_log table</span>
+        <span class="chip chip-light">ON CONFLICT DO UPDATE</span>
+      </div>
+      <div class="node-info" style="margin-top:12px">
+        <div class="dot dot-green"></div>
+        <span class="node-info-text">Status: Healthy · 6/60 connections</span>
+      </div>
+    </div>
+
+    <div class="schedule-box" style="margin-bottom:0">
+      <div class="schedule-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#1D4ED8" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        GitHub Actions — Автомат Sync
+      </div>
+      <div class="schedule-times" style="margin-bottom:12px">
+        <span class="time-chip">09:00 UB</span>
+        <span class="time-chip">13:00 UB</span>
+        <span class="time-chip">18:00 UB</span>
+      </div>
+      <div style="font-size:11px;color:#374151;font-weight:600;margin-bottom:6px">Render сервер дэх auto-sync:</div>
+      <div style="background:#1D4ED8;color:#fff;font-size:11px;font-weight:600;padding:4px 12px;border-radius:20px;display:inline-block">APScheduler · 2 цаг тутам</div>
+      <div style="margin-top:10px;font-size:11px;color:#374151;font-weight:600;margin-bottom:6px">Гараар:</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <div style="background:#FEF3C7;color:#92400E;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px">sync_tendergov.bat</div>
+        <div style="background:#F0FDF4;color:#065F46;font-size:10px;font-weight:600;padding:3px 8px;border-radius:6px">Sync Now button</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main arrow -->
+  <div class="main-arrow" style="margin-bottom:8px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div style="width:2px;height:20px;background:linear-gradient(to bottom,#94A3B8,#1B2B41)"></div>
+      <div class="main-arrowhead"></div>
+    </div>
+  </div>
+
+  <!-- LAYER 4: BACKEND API -->
+  <div class="layer-label">Layer 4 — Backend API</div>
+  <div class="node node-api" style="margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:36px;height:36px;background:rgba(255,255,255,0.1);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      </div>
+      <div>
+        <div class="node-title">FastAPI · Render.com</div>
+        <div class="node-sub">mcsi-tender-monitor.onrender.com · Free tier · Python 3</div>
+      </div>
+    </div>
+    <div class="chips-row">
+      <span class="chip chip-light">GET /api/tenders</span>
+      <span class="chip chip-light">GET /api/stats</span>
+      <span class="chip chip-light">POST /api/sync</span>
+      <span class="chip chip-light">GET /api/sync/log</span>
+      <span class="chip chip-light">asyncpg</span>
+      <span class="chip chip-light">CORS enabled</span>
+    </div>
+    <div class="node-info" style="margin-top:12px">
+      <div class="dot dot-green"></div>
+      <span class="node-info-text">Live · Auto-deploy from GitHub main branch</span>
+    </div>
+  </div>
+
+  <!-- Main arrow -->
+  <div class="main-arrow" style="margin-bottom:8px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div style="width:2px;height:20px;background:linear-gradient(to bottom,#94A3B8,#1B2B41)"></div>
+      <div class="main-arrowhead"></div>
+    </div>
+  </div>
+
+  <!-- LAYER 5: FRONTEND -->
+  <div class="layer-label">Layer 5 — Frontend</div>
+  <div class="node node-fe" style="margin-bottom:8px">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px">
+      <div style="width:36px;height:36px;background:#1B2B41;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18"/></svg>
+      </div>
+      <div>
+        <div class="node-title" style="color:#1B2B41">GitHub Pages — Static HTML</div>
+        <div class="node-sub" style="color:#64748b">anandbat.github.io/Monitor-Bid · Auto-deploy on push</div>
+      </div>
+    </div>
+    <div class="fe-pages">
+      <div class="fe-page">
+        <div class="fe-page-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+        </div>
+        <div class="page-name">Dashboard</div>
+        <div class="page-desc">KPI · Chart · Feed</div>
+      </div>
+      <div class="fe-page">
+        <div class="fe-page-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>
+        </div>
+        <div class="page-name">Tender List</div>
+        <div class="page-desc">Filter · Search · Detail</div>
+      </div>
+      <div class="fe-page">
+        <div class="fe-page-icon">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/></svg>
+        </div>
+        <div class="page-name">Sources</div>
+        <div class="page-desc">Sync status · Stats</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px">
+      <span class="chip chip-dark">Tailwind CSS</span>
+      <span class="chip chip-dark">Vanilla JS</span>
+      <span class="chip chip-dark">PWA</span>
+      <span class="chip chip-dark">Mobile responsive</span>
+      <span class="chip chip-green">Auto-deploy</span>
+    </div>
+  </div>
+
+  <!-- Main arrow -->
+  <div class="main-arrow" style="margin-bottom:8px">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+      <div style="width:2px;height:20px;background:linear-gradient(to bottom,#94A3B8,#1B2B41)"></div>
+      <div class="main-arrowhead"></div>
+    </div>
+  </div>
+
+  <!-- LAYER 6: USER -->
+  <div class="layer-label">Layer 6 — End User</div>
+  <div class="user-node">
+    <div class="user-avatar">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#C8FF00" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+    </div>
+    <div class="user-text">
+      <h3>MCS International LLC</h3>
+      <p>Browser · Desktop · Mobile (PWA)</p>
+    </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-left:auto">
+      <span class="chip chip-dark">Chrome / Safari</span>
+      <span class="chip chip-green">iOS / Android</span>
+    </div>
+  </div>
+
+  <!-- Footer note -->
+  <div style="margin-top:32px;padding:16px;background:#F1F5F9;border-radius:12px;font-size:11px;color:#64748b;text-align:center;line-height:1.6">
+    Built with <strong style="color:#1B2B41">FastAPI + Supabase + GitHub Pages + Render</strong> ·
+    Scrapers: tender.gov.mn, World Bank, ADB, EBRD, Energy.gov.mn ·
+    Auto-sync: 09:00 · 13:00 · 18:00 (Ulaanbaatar)
+  </div>
+
+</div>
+</body>
+</html>
