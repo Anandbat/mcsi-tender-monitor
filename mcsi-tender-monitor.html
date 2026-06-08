@@ -276,6 +276,21 @@
       vertical-align: middle;
     }
 
+    /* ── Wake-up spinner ── */
+    @keyframes wakeSpin { to { transform: rotate(360deg); } }
+    @keyframes wakePopIn {
+      from { opacity: 0; transform: scale(0.88); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+    .wake-spinner {
+      width: 52px; height: 52px; margin: 0 auto;
+      border: 4px solid #e2e8f0;
+      border-top-color: #3B82F6;
+      border-radius: 50%;
+      animation: wakeSpin 0.75s linear infinite;
+    }
+    #wake-popup > div { animation: wakePopIn 0.25s ease both; }
+
     /* ── Page reveal ── */
     @keyframes pageIn {
       from { opacity: 0; transform: translateY(16px); }
@@ -1797,26 +1812,85 @@ document.addEventListener('DOMContentLoaded', async () => {
   renderTable();
   renderSources(null);
 
-  // Show waking up message if first load takes long
+  // ── Wake-up popup helpers ──────────────────────────────────────
+  function showWakePopup() {
+    const p = document.getElementById('wake-popup');
+    if (p) p.style.display = 'flex';
+  }
+  function hideWakePopup() {
+    const p = document.getElementById('wake-popup');
+    if (p) { p.style.display = 'none'; }
+  }
+  function setWakeStatus(text, barPct, isError) {
+    const s = document.getElementById('wake-status');
+    const b = document.getElementById('wake-bar');
+    if (s) s.innerHTML = text;
+    if (b) {
+      b.style.width = barPct + '%';
+      b.style.background = isError
+        ? '#EF4444'
+        : 'linear-gradient(90deg,#3B82F6,#60a5fa)';
+    }
+  }
+
+  // Show popup after 5s if still offline
   const wakeTimer = setTimeout(() => {
-    const sub = document.getElementById('page-sub');
-    if (!API_ONLINE && sub) sub.innerHTML = `<span style="color:#F59E0B;">⏳ Server waking up... (~30 sec)</span>`;
+    if (!API_ONLINE) showWakePopup();
   }, 5000);
 
   // First load
   await loadAll();
   clearTimeout(wakeTimer);
 
-  // If still offline, retry every 15s up to 4 times
-  if (!API_ONLINE) {
+  if (API_ONLINE) {
+    hideWakePopup();
+  } else {
+    // Show popup immediately if still offline after first load
+    showWakePopup();
+    const TOTAL_RETRIES = 4;
+    const RETRY_SECS = 15;
     let retries = 0;
+    let cdHandle = null;
+
+    function startCountdown(attempt) {
+      clearInterval(cdHandle);
+      let cd = RETRY_SECS;
+      setWakeStatus(`Retrying in ${cd}s &nbsp;<span style="color:#cbd5e1;">(attempt ${attempt}/${TOTAL_RETRIES})</span>`, 0, false);
+      cdHandle = setInterval(() => {
+        cd--;
+        const pct = ((RETRY_SECS - cd) / RETRY_SECS) * 100;
+        if (cd > 0) {
+          setWakeStatus(`Retrying in ${cd}s &nbsp;<span style="color:#cbd5e1;">(attempt ${attempt}/${TOTAL_RETRIES})</span>`, pct, false);
+        } else {
+          clearInterval(cdHandle);
+          setWakeStatus(`Connecting... <span style="color:#cbd5e1;">(attempt ${attempt}/${TOTAL_RETRIES})</span>`, 100, false);
+        }
+      }, 1000);
+    }
+
+    startCountdown(1);
+
     const retryInterval = setInterval(async () => {
       retries++;
+      clearInterval(cdHandle);
+      setWakeStatus(`Connecting... <span style="color:#cbd5e1;">(attempt ${retries}/${TOTAL_RETRIES})</span>`, 100, false);
       await loadAll();
-      if (API_ONLINE || retries >= 4) {
+      if (API_ONLINE) {
         clearInterval(retryInterval);
+        clearInterval(cdHandle);
+        setWakeStatus('✓ Connected!', 100, false);
+        setTimeout(hideWakePopup, 600);
+      } else if (retries >= TOTAL_RETRIES) {
+        clearInterval(retryInterval);
+        clearInterval(cdHandle);
+        setWakeStatus(
+          `Could not connect. <a href="javascript:location.reload()" style="color:#3B82F6;text-decoration:underline;">Reload</a>`,
+          100, true
+        );
+      } else {
+        startCountdown(retries + 1);
       }
-    }, 15000);
+    }, RETRY_SECS * 1000);
   }
 
   // Auto-refresh stats every 2 minutes
@@ -1923,6 +1997,24 @@ function openDetail(idx) {
         style="flex-shrink:0;width:28px;height:28px;border-radius:50%;border:none;background:#f1f5f9;cursor:pointer;font-size:16px;color:#64748b;display:flex;align-items:center;justify-content:center;">✕</button>
     </div>
     <div id="modal-body" style="padding:20px 24px;"></div>
+  </div>
+</div>
+
+<!-- ══ SERVER WAKE-UP POPUP ══ -->
+<div id="wake-popup" onclick="if(event.target===this)void(0)"
+  style="display:none;position:fixed;inset:0;background:rgba(15,23,42,0.65);backdrop-filter:blur(6px);z-index:3000;align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:20px;padding:44px 48px 36px;max-width:380px;width:100%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,0.3);">
+    <div class="wake-spinner"></div>
+    <h3 style="font-family:'Sora',sans-serif;font-size:18px;font-weight:700;color:#0f172a;margin:22px 0 8px;">Server is waking up</h3>
+    <p style="font-size:13px;color:#64748b;margin:0 0 22px;line-height:1.65;">
+      Render free tier sleeps after 15 min of inactivity.<br>
+      Automatically retrying...
+    </p>
+    <!-- Progress bar -->
+    <div style="background:#f1f5f9;border-radius:8px;height:6px;margin-bottom:14px;overflow:hidden;">
+      <div id="wake-bar" style="height:100%;background:linear-gradient(90deg,#3B82F6,#60a5fa);border-radius:8px;width:0%;transition:width 1s linear;"></div>
+    </div>
+    <div id="wake-status" style="font-size:12px;color:#94a3b8;">Connecting...</div>
   </div>
 </div>
 
