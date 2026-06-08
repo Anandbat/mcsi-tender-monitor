@@ -801,6 +801,23 @@
         <button class="filter-pill" id="energy-only-btn" onclick="toggleEnergyOnly(this)" style="color:#EA580C;border-color:rgba(234,88,12,0.4);">⚡ Energy Only</button>
         <button class="filter-pill" onclick="toggleExpired(this)" style="color:#94a3b8;border-color:rgba(148,163,184,0.4);opacity:0.6;">🕒 Show Expired</button>
       </div>
+      <!-- Row 3: Exclude keywords -->
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding-top:12px;border-top:1px solid rgba(0,0,0,0.06);">
+        <span style="font-size:10px;font-weight:700;color:#999;letter-spacing:0.08em;text-transform:uppercase;white-space:nowrap;">EXCLUDE</span>
+        <div id="exclude-tags" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input id="exclude-input" type="text" placeholder="keyword нэмэх..."
+            style="font-size:12px;padding:5px 12px;border:1px solid rgba(0,0,0,0.15);border-radius:20px;outline:none;background:#fff;color:#333;width:140px;transition:border 0.2s;"
+            onfocus="this.style.borderColor='rgba(239,68,68,0.5)'" onblur="this.style.borderColor='rgba(0,0,0,0.15)'"
+            onkeydown="if(event.key==='Enter'){addExcludeKeyword();event.preventDefault();}" />
+          <button onclick="addExcludeKeyword()"
+            style="font-size:11px;font-weight:600;padding:5px 12px;border:1px solid rgba(239,68,68,0.4);border-radius:20px;background:rgba(239,68,68,0.07);color:#DC2626;cursor:pointer;transition:background 0.2s;"
+            onmouseover="this.style.background='rgba(239,68,68,0.15)'" onmouseout="this.style.background='rgba(239,68,68,0.07)'">
+            + Нэмэх
+          </button>
+        </div>
+        <span style="font-size:10px;color:#bbb;margin-left:2px;">· нэр дотор байвал нуугдана</span>
+      </div>
     </div>
 
     <!-- Table -->
@@ -1257,6 +1274,46 @@ let energyOnly = false;
 let showExpired = false;
 let _urgentOnly = false;
 
+// ── Exclude keywords (persisted in localStorage) ─────────────────
+let excludeKeywords = JSON.parse(localStorage.getItem('mcsi_exclude_kw') || '["төмс","ногоо","хоол","цаас","цэвэрлэг"]');
+
+function renderExcludeTags() {
+  const container = document.getElementById('exclude-tags');
+  if (!container) return;
+  if (excludeKeywords.length === 0) {
+    container.innerHTML = '<span style="font-size:11px;color:#bbb;font-style:italic;">нэмсэн keyword алга</span>';
+    return;
+  }
+  container.innerHTML = excludeKeywords.map(kw =>
+    `<span style="display:inline-flex;align-items:center;gap:3px;font-size:11px;padding:3px 8px 3px 10px;border-radius:20px;background:rgba(239,68,68,0.07);border:1px solid rgba(239,68,68,0.28);color:#DC2626;font-weight:500;">
+      ${kw}
+      <button onclick="removeExcludeKeyword('${kw.replace(/'/g,"\\'")}');" title="Устгах"
+        style="background:none;border:none;cursor:pointer;color:#DC2626;font-size:15px;line-height:1;padding:0 0 0 3px;display:flex;align-items:center;">&times;</button>
+    </span>`
+  ).join('');
+}
+
+function addExcludeKeyword() {
+  const input = document.getElementById('exclude-input');
+  const val = input.value.trim().toLowerCase();
+  if (!val) return;
+  if (!excludeKeywords.includes(val)) {
+    excludeKeywords.push(val);
+    localStorage.setItem('mcsi_exclude_kw', JSON.stringify(excludeKeywords));
+    renderExcludeTags();
+    renderTable();
+  }
+  input.value = '';
+  input.focus();
+}
+
+function removeExcludeKeyword(kw) {
+  excludeKeywords = excludeKeywords.filter(k => k !== kw);
+  localStorage.setItem('mcsi_exclude_kw', JSON.stringify(excludeKeywords));
+  renderExcludeTags();
+  renderTable();
+}
+
 // ── Energy keywords ──────────────────────────────────────────────
 const ENERGY_KEYWORDS = [
   'energy','power','solar','wind','bess','substation','ohtl',
@@ -1424,7 +1481,10 @@ function renderTable() {
       [...activeFilters].some(f => t.source.toLowerCase().includes(f.toLowerCase()));
     const matchExpiry = showExpired || t.days >= 0;
     const matchUrgent = !_urgentOnly || (t.days >= 0 && t.days <= 7);
-    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry && matchUrgent;
+    const nameLow = t.name.toLowerCase();
+    const matchExclude = excludeKeywords.length === 0 ||
+      !excludeKeywords.some(kw => nameLow.includes(kw));
+    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry && matchUrgent && matchExclude;
   });
   // Apply sort
   rows.sort((a, b) => {
@@ -1560,7 +1620,10 @@ function exportCSV() {
       [...activeFilters].some(f => t.source.toLowerCase().includes(f.toLowerCase()));
     const matchExpiry = showExpired || t.days >= 0;
     const matchUrgent = !_urgentOnly || (t.days >= 0 && t.days <= 7);
-    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry && matchUrgent;
+    const nameLow2 = t.name.toLowerCase();
+    const matchExclude2 = excludeKeywords.length === 0 ||
+      !excludeKeywords.some(kw => nameLow2.includes(kw));
+    return matchSearch && matchEnergy && matchType && matchSource && matchExpiry && matchUrgent && matchExclude2;
   });
   const header = ['Name','Source','Type','Category','Client','Posted','Deadline','Days Left','URL'];
   const csv = [header, ...rows.map(t => [
@@ -1729,6 +1792,7 @@ async function loadAll() {
 
 document.addEventListener('DOMContentLoaded', async () => {
   initSortHeaders();
+  renderExcludeTags();
   renderFeed();
   renderTable();
   renderSources(null);
